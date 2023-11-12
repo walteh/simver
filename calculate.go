@@ -20,54 +20,18 @@ var (
 	ErrValidatingCalculation = terrors.New("ErrValidatingCalculation")
 )
 
-func NewCaclulation(ex Execution) *Calculation {
-	mrlt := MostRecentLiveTag(ex)
-	mrrt := MostRecentReservedTag(ex)
-	return &Calculation{
-		MostRecentLiveTag:     mrlt,
-		MostRecentReservedTag: mrrt,
-		MyMostRecentTag:       MyMostRecentTag(ex),
-		MyMostRecentBuild:     MyMostRecentBuildNumber(ex),
-		PR:                    ex.PR(),
-		NextValidTag:          GetNextValidTag(ex.BaseBranch() == "main", mrlt, mrrt),
-	}
-}
-
-const nvt_const = "v0.0.0"
-
-// func InjectNVT(str NVT, arrays ...[]string) {
-// 	for _, arr := range arrays {
-// 		for i, v := range arr {
-// 			arr[i] = strings.ReplaceAll(v, nvt_const, string(str))
-// 		}
-// 	}
-// }
-
 func (me *Calculation) CalculateNewTagsRaw() ([]string, []string) {
 	baseTags := make([]string, 0)
 	headTags := make([]string, 0)
 
 	nvt := string(me.NextValidTag)
 
-	// bfx := fmt.Sprintf("-pr%d+%d", me.PR, int(me.MyMostRecentBuild)+1)
-
 	mmrt := string(me.MyMostRecentTag)
-
-	// if me.HeadBranch != "main" {
-	// 	nvt = nvt + bfx
-	// 	if mmrt != "" {
-	// 		mmrt = mmrt + bfx
-	// 	}
-	// }
-
-	// nvt = nvt + bfx
-	// mmrt = mmrt + bfx
 
 	mrlt := string(me.MostRecentLiveTag)
 
 	// first we check to see if mrlt exists, if not we set it to the base
 	if mrlt == "" {
-		// baseTags = append(baseTags, baseTag)
 		mrlt = baseTag
 	}
 

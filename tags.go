@@ -4,6 +4,7 @@ import (
 	"errors"
 	"regexp"
 	"sort"
+	"strings"
 
 	"golang.org/x/mod/semver"
 )
@@ -14,6 +15,17 @@ type TagInfo struct {
 }
 
 type Tags []TagInfo
+
+func (t Tags) GetReserved() (TagInfo, bool) {
+
+	for _, tag := range t {
+		if strings.Contains(tag.Name, "-reserved") {
+			return tag, true
+		}
+	}
+
+	return TagInfo{}, false
+}
 
 // HighestSemverContainingString finds the highest semantic version tag that contains the specified string.
 func (t Tags) HighestSemverMatching(matcher ...*regexp.Regexp) (string, error) {

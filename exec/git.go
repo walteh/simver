@@ -42,48 +42,6 @@ func (p *ExecProvider) CommitFromRef(ctx context.Context, str string) (string, e
 	return strings.TrimSpace(string(out)), nil
 }
 
-// func (p *ExecProvider) GetCommitInfo(ctx context.Context, msg string) (*simver.CommitInfo, error) {
-// 	cmd := p.git(ctx, "log", "-1", "--pretty=format:%H%n%s%n%P", msg)
-// 	out, err := cmd.Output()
-// 	if err != nil {
-// 		return nil, simver.ErrGit.Trace(err)
-// 	}
-
-// 	lines := strings.Split(string(out), "\n")
-// 	if len(lines) != 3 {
-// 		return nil, simver.ErrGit.Trace()
-// 	}
-
-// 	commit := &simver.CommitInfo{
-// 		Hash:    lines[0],
-// 		Message: lines[1],
-// 	}
-
-// 	cmp := regexp.MustCompile(`\(#\d+\)`)
-// 	prnum := cmp.FindString(lines[2])
-// 	// Check if the commit is a PR merge
-// 	// If it is, then the third line will be the PR number
-// 	// If it is not, then the third line will be the parent commit hash
-// 	if prnum != "" {
-// 		commit.IsPrMerge = true
-
-// 		// Extract the PR number from the commit message
-// 		prnum = strings.TrimPrefix(prnum, "(#")
-// 		prnum = strings.TrimSuffix(prnum, ")")
-
-// 		n, err := strconv.Atoi(prnum)
-// 		if err != nil {
-// 			return nil, simver.ErrGit.Trace(err)
-// 		}
-
-// 		commit.AssociatedPR = n
-// 	} else {
-// 		commit.IsPrMerge = false
-// 	}
-
-// 	return commit, nil
-// }
-
 func (p *ExecProvider) Branch(ctx context.Context) (string, error) {
 	cmd := p.git(ctx, "branch")
 	out, err := cmd.Output()

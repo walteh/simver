@@ -11,18 +11,29 @@ import (
 )
 
 type ExecGHProvider struct {
-	internal ExecProvider
+	GHExecutable string
+	GitHubToken  string
+	RepoPath     string
 }
+
+// func NewGitHubCLIExecProvider(prov *ExecProvider, ghExecutable string) (*ExecGHProvider, error) {
+// 	return &ExecGHProvider{
+// 		GitProvider: prov,
+// 		GitHubToken: prov.Token,
+
+// 		GHExecutable: ghExecutable,
+// 	}, nil
+// }
 
 var _ simver.PRProvider = (*ExecGHProvider)(nil)
 
 func (p *ExecGHProvider) gh(ctx context.Context, str ...string) *exec.Cmd {
 	env := []string{
-		"GITHUB_TOKEN" + "=" + p.internal.Token,
+		"GITHUB_TOKEN" + "=" + p.GitHubToken,
 	}
 
-	cmd := exec.CommandContext(ctx, "gh", str...)
-	cmd.Dir = p.internal.RepoPath
+	cmd := exec.CommandContext(ctx, p.GHExecutable, str...)
+	cmd.Dir = p.RepoPath
 	cmd.Env = append(os.Environ(), env...)
 
 	return cmd

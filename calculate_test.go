@@ -63,6 +63,25 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			expectedBaseTags: []string{},
 			expectedHeadTags: []string{"v1.2.4-pr1+34"},
 		},
+
+		{
+			name: "i have a tag reserved but do not have my own tag",
+			calculation: &simver.Calculation{
+				MostRecentLiveTag:     "v1.2.3",
+				MostRecentReservedTag: "v1.2.5-reserved",
+				MyMostRecentTag:       "",
+				MyMostRecentBuild:     33,
+				PR:                    1,
+				NextValidTag:          "v1.2.6",
+			},
+			expectedBaseTags: []string{
+				"v1.2.6-reserved",
+				"v1.2.6-pr1+base",
+			},
+			expectedHeadTags: []string{
+				"v1.2.6-pr1+34",
+			},
+		},
 		// Add more test cases here...
 	}
 
