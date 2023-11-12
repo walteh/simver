@@ -9,6 +9,7 @@ import (
 	"github.com/walteh/simver"
 	"github.com/walteh/simver/exec"
 	szl "github.com/walteh/snake/zerolog"
+	"github.com/walteh/terrors"
 )
 
 func NewGitHubActionsProvider() (simver.GitProvider, simver.PRProvider, error) {
@@ -52,7 +53,8 @@ func main() {
 
 	ee, err := simver.LoadExecution(ctx, gitprov, prprov)
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msg("error loading execution")
+		oerr, frm, _ := terrors.Cause(err)
+		zerolog.Ctx(ctx).Error().Any("frame", frm).Err(oerr).Msg("error loading execution")
 		os.Exit(1)
 	}
 
