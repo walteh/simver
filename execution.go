@@ -82,9 +82,7 @@ import (
 // 2. create a new tag (based on nvt) on the head commit with no build number or prerelease
 
 type Execution interface {
-	IsMerge() bool
 	PR() int
-
 	HeadCommit() string
 	BaseCommit() string
 
@@ -98,87 +96,65 @@ type Execution interface {
 	BaseBranchTags() Tags
 }
 
+const baseTag = "v0.1.0"
+
 func NewTags(me Execution) Tags {
+	calc := NewCaclulation(me)
+
+	nvt := GetNextValidTag(me.BaseBranch() == "main", calc.MostRecentLiveTag, calc.MostRecentReservedTag)
+
+	baseTags, headTags := calc.CalculateNewTagsRaw()
+
 	tags := make(Tags, 0)
-
-	nvt := Nvt(me)
-
-	nvtReserved := nvt + "-reserved"
-
-	nvtPrBase := nvt + "-pr" + strconv.Itoa(me.PR()) + "+base"
-
-	bfx := "-pr" + strconv.Itoa(me.PR()) + "+" + strconv.Itoa(Mmrbn(me)+1)
-
-	mmrt := Mmrt(me)
-
-	if me.HeadBranch() != "main" {
-		nvt = nvt + bfx
-		if mmrt != "" {
-			mmrt = mmrt + bfx
-		}
+	for _, tag := range baseTags {
+		tag = strings.ReplaceAll(tag, nvt_const, string(nvt))
+		tags = append(tags, TagInfo{Name: tag, Ref: me.BaseCommit()})
 	}
-
-	if me.BaseBranch() == me.HeadBranch() {
-		tags = append(tags, TagInfo{
-			Name: mmrt,
-			Ref:  me.HeadCommit(),
-		})
-	} else {
-		if mmrt == "" {
-			tags = append(tags, TagInfo{
-				Name: nvt,
-				Ref:  me.HeadCommit(),
-			})
-			tags = append(tags, TagInfo{
-				Name: nvtReserved,
-				Ref:  me.BaseCommit(),
-			})
-			tags = append(tags, TagInfo{
-				Name: nvtPrBase,
-				Ref:  me.BaseCommit(),
-			})
-		} else {
-			tags = append(tags, TagInfo{
-				Name: mmrt,
-				Ref:  me.HeadCommit(),
-			})
-		}
+	for _, tag := range headTags {
+		tag = strings.ReplaceAll(tag, nvt_const, string(nvt))
+		tags = append(tags, TagInfo{Name: tag, Ref: me.HeadCommit()})
 	}
 
 	return tags
 }
 
-func Mrlt(e Execution) string {
+type MRLT string // most recent live tag
+type MRRT string // most recent reserved tag
+type NVT string  // next valid tag
+type MMRT string // my most recent tag
+type MMRBN int   // my most recent build number
+
+func MostRecentLiveTag(e Execution) MRLT {
 	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
 	highest, err := e.BaseBranchTags().HighestSemverMatching(reg)
 	if err != nil {
 		return ""
 	}
 
-	return strings.Split(semver.Canonical(highest), "-")[0]
+	return MRLT(strings.Split(semver.Canonical(highest), "-")[0])
 }
 
-func Mmrt(e Execution) string {
+func MyMostRecentTag(e Execution) MMRT {
 	reg := regexp.MustCompile(fmt.Sprintf(`^v\d+\.\d+\.\d+-pr%d+\S+$`, e.PR()))
 	highest, err := e.HeadBranchTags().HighestSemverMatching(reg)
 	if err != nil {
 		return ""
 	}
 
-	return strings.Split(semver.Canonical(highest), "-")[0]
+	return MMRT(strings.Split(semver.Canonical(highest), "-")[0])
 }
 
-func Mrrt(e Execution) string {
+func MostRecentReservedTag(e Execution) MRRT {
 	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+-reserved$`)
 	highest, err := e.BaseCommitTags().HighestSemverMatching(reg)
 	if err != nil {
 		return ""
 	}
 
-	return strings.Split(semver.Canonical(highest), "-")[0]
+	return MRRT(strings.Split(semver.Canonical(highest), "-")[0])
 }
 
-func Mmrbn(e Execution) int {
+func MyMostRecentBuildNumber(e Execution) MMRBN {
 	reg := regexp.MustCompile(fmt.Sprintf(`^.*-pr%d+\+\d+$`, e.PR()))
 	highest, err := e.HeadBranchTags().HighestSemverMatching(reg)
 	if err != nil {
@@ -195,45 +171,88 @@ func Mmrbn(e Execution) int {
 		return 0
 	}
 
-	return n
+	return MMRBN(n)
 }
 
-func Nvt(e Execution) string {
-	mrlt := Mrlt(e)
+func GetNextValidTag(minor bool, mrlt MRLT, mrrt MRRT) NVT {
 
-	mrrt := Mrrt(e)
+	var max string
+
+	// mrlt := me.MostRecentLiveTag
+	// mrrt := me.MostRecentReservedTag
 
 	if mrlt == "" && mrrt == "" {
-		return "a"
-	}
-
-	max := mrlt
-	if semver.Compare(mrrt, mrlt) > 0 {
-		max = mrrt
+		max = baseTag
+	} else {
+		if semver.Compare(string(mrrt), string(mrlt)) > 0 {
+			max = string(mrrt)
+		} else {
+			max = string(mrlt)
+		}
 	}
 
 	mlrtSplit := strings.Split(strings.Split(strings.TrimPrefix(max, "v"), "-")[0], ".")
 	if len(mlrtSplit) != 3 {
-		return "b"
+		panic("invalid mrlt or mrrt")
 	}
 
 	minornum, err := strconv.Atoi(mlrtSplit[1])
 	if err != nil {
-		return "c"
+		panic("invalid mrlt or mrrt")
 	}
 
 	patchnum, err := strconv.Atoi(mlrtSplit[2])
 	if err != nil {
-		return "d"
+		panic("invalid mrlt or mrrt")
 	}
 
-	if e.BaseBranch() == "main" {
+	if minor {
 		minornum++
 		patchnum = 0
 	} else {
 		patchnum++
 	}
 
-	return fmt.Sprintf("%s.%d.%d", semver.Major(mrlt), minornum, patchnum)
+	return NVT(fmt.Sprintf("%s.%d.%d", semver.Major(max), minornum, patchnum))
 
 }
+
+// func NextValidTag(e Execution, mrlt MRLT, mrrt MRRT) NVT {
+
+// 	var max string
+
+// 	if mrlt == "" && mrrt == "" {
+// 		max = baseTag
+// 	} else {
+// 		if semver.Compare(string(mrrt), string(mrlt)) > 0 {
+// 			max = string(mrrt)
+// 		} else {
+// 			max = string(mrlt)
+// 		}
+// 	}
+
+// 	mlrtSplit := strings.Split(strings.Split(strings.TrimPrefix(max, "v"), "-")[0], ".")
+// 	if len(mlrtSplit) != 3 {
+// 		panic("invalid mrlt or mrrt")
+// 	}
+
+// 	minornum, err := strconv.Atoi(mlrtSplit[1])
+// 	if err != nil {
+// 		panic("invalid mrlt or mrrt")
+// 	}
+
+// 	patchnum, err := strconv.Atoi(mlrtSplit[2])
+// 	if err != nil {
+// 		panic("invalid mrlt or mrrt")
+// 	}
+
+// 	if e.BaseBranch() == "main" {
+// 		minornum++
+// 		patchnum = 0
+// 	} else {
+// 		patchnum++
+// 	}
+
+// 	return NVT(fmt.Sprintf("%s.%d.%d", semver.Major(max), minornum, patchnum))
+
+// }
