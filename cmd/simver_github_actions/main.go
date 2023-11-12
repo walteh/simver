@@ -53,8 +53,8 @@ func main() {
 
 	ee, err := simver.LoadExecution(ctx, gitprov, prprov)
 	if err != nil {
-		oerr, frm, _ := terrors.Cause(err)
-		zerolog.Ctx(ctx).Error().Any("frame", frm).Err(oerr).Msg("error loading execution")
+		oerr, frm, info, ok := terrors.Cause(err)
+		zerolog.Ctx(ctx).Error().Any("frame", frm).Any("info", info).Bool("ok", ok).Err(oerr).Errs("returned", []error{err}).Msg("error loading execution")
 		os.Exit(1)
 	}
 

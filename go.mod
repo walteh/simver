@@ -6,7 +6,7 @@ require (
 	github.com/rs/zerolog v1.31.0
 	github.com/stretchr/testify v1.8.4
 	github.com/walteh/snake v0.15.1
-	github.com/walteh/terrors v0.1.2
+	github.com/walteh/terrors v0.2.0
 	golang.org/x/mod v0.14.0
 )
 
