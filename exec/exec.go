@@ -7,4 +7,11 @@ type ExecProvider struct {
 	Email         string
 	TokenEnvName  string
 	GitExecutable string
+	ReadOnly      bool
+}
+
+type ExecGHProvider struct {
+	GHExecutable string
+	GitHubToken  string
+	RepoPath     string
 }

@@ -5,14 +5,17 @@ import (
 	"os"
 	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
 	"github.com/walteh/simver/exec"
+	szl "github.com/walteh/snake/zerolog"
 )
 
 func NewGitHubActionsProvider() (simver.GitProvider, simver.PRProvider, error) {
 
 	token := os.Getenv("GITHUB_TOKEN")
 	repoPath := os.Getenv("GITHUB_WORKSPACE")
+	readOnly := os.Getenv("SIMVER_READ_ONLY")
 
 	c := &exec.ExecProvider{
 		RepoPath:      repoPath,
@@ -21,6 +24,7 @@ func NewGitHubActionsProvider() (simver.GitProvider, simver.PRProvider, error) {
 		Email:         "41898282+github-actions[bot]@users.noreply.github.com",
 		TokenEnvName:  "GITHUB_TOKEN",
 		GitExecutable: "git",
+		ReadOnly:      readOnly == "true" || readOnly == "1",
 	}
 
 	pr := &exec.ExecGHProvider{
@@ -36,27 +40,42 @@ func main() {
 
 	ctx := context.Background()
 
+	ctx = szl.NewVerboseLoggerContext(ctx)
+
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
 	gitprov, prprov, err := NewGitHubActionsProvider()
 	if err != nil {
-		panic(err)
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error creating provider")
+		os.Exit(1)
 	}
 
 	ee, err := simver.LoadExecution(ctx, gitprov, prprov)
 	if err != nil {
-		panic(err)
+		zerolog.Ctx(ctx).Error().Err(err).Msg("error loading execution")
+		os.Exit(1)
 	}
 
 	tags := simver.NewTags(ee)
 
 	reservedTag, reserved := tags.GetReserved()
 
+	tries := 0
+
 	for !reserved {
+
 		err := gitprov.CreateTag(ctx, reservedTag)
 		if err != nil {
+			if tries > 5 {
+				zerolog.Ctx(ctx).Error().Err(err).Msg("too many tries")
+				os.Exit(1)
+			}
+
 			time.Sleep(1 * time.Second)
 			ee, err := simver.LoadExecution(ctx, gitprov, prprov)
 			if err != nil {
-				panic(err)
+				zerolog.Ctx(ctx).Error().Err(err).Msg("error loading execution")
+				os.Exit(1)
 			}
 			tags := simver.NewTags(ee)
 			reservedTag, reserved = tags.GetReserved()
@@ -72,7 +91,8 @@ func main() {
 
 		err := gitprov.CreateTag(ctx, tag)
 		if err != nil {
-			panic(err)
+			zerolog.Ctx(ctx).Error().Err(err).Msg("error creating tag")
+			os.Exit(1)
 		}
 	}
 

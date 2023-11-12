@@ -6,7 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
+	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
 )
 
@@ -26,6 +28,8 @@ func (p *ExecProvider) git(ctx context.Context, str ...string) *exec.Cmd {
 		str = str[1:]
 	}
 
+	zerolog.Ctx(ctx).Debug().Strs("args", str).Str("executable", p.GitExecutable).Msg("building git command")
+
 	cmd := exec.CommandContext(ctx, p.GitExecutable, str[1:]...)
 	cmd.Dir = p.RepoPath
 	cmd.Env = append(os.Environ(), env...)
@@ -34,15 +38,26 @@ func (p *ExecProvider) git(ctx context.Context, str ...string) *exec.Cmd {
 }
 
 func (p *ExecProvider) CommitFromRef(ctx context.Context, str string) (string, error) {
+
+	zerolog.Ctx(ctx).Debug().Str("ref", str).Msg("getting commit from ref")
+
 	cmd := p.git(ctx, "rev-parse", str)
 	out, err := cmd.Output()
 	if err != nil {
 		return "", simver.ErrGit.Trace(err)
 	}
-	return strings.TrimSpace(string(out)), nil
+
+	res := strings.TrimSpace(string(out))
+
+	zerolog.Ctx(ctx).Debug().Str("ref", str).Str("commit", res).Msg("got commit from ref")
+
+	return res, nil
 }
 
 func (p *ExecProvider) Branch(ctx context.Context) (string, error) {
+
+	zerolog.Ctx(ctx).Debug().Msg("getting branch")
+
 	cmd := p.git(ctx, "branch")
 	out, err := cmd.Output()
 	if err != nil {
@@ -61,10 +76,17 @@ func (p *ExecProvider) Branch(ctx context.Context) (string, error) {
 		return "", simver.ErrGit.Trace()
 	}
 
+	zerolog.Ctx(ctx).Debug().Str("branch", res).Msg("got branch")
+
 	return res, nil
 }
 
 func (p *ExecProvider) TagsFromCommit(ctx context.Context, commitHash string) ([]simver.TagInfo, error) {
+
+	ctx = zerolog.Ctx(ctx).With().Str("commit", commitHash).Logger().WithContext(ctx)
+
+	zerolog.Ctx(ctx).Debug().Msg("getting tags from commit")
+
 	cmd := p.git(ctx, "tag", "--points-at", commitHash)
 	out, err := cmd.Output()
 	if err != nil {
@@ -81,12 +103,20 @@ func (p *ExecProvider) TagsFromCommit(ctx context.Context, commitHash string) ([
 		tags = append(tags, simver.TagInfo{Name: line, Ref: commitHash})
 	}
 
+	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tags)).Any("tags", tags).Msg("got tags from commit")
+
 	return tags, nil
 }
 
 func (p *ExecProvider) TagsFromBranch(ctx context.Context, branch string) ([]simver.TagInfo, error) {
-	// git tag --merged main --format="%(objectname) %(objecttype) %(refname)"
-	cmd := p.git(ctx, "tag", "--merged", branch, `--format={"sha":"%(objectname)","type": "%(objecttype)", "ref": "%(refname)"}`)
+
+	start := time.Now()
+
+	ctx = zerolog.Ctx(ctx).With().Str("branch", branch).Logger().WithContext(ctx)
+
+	zerolog.Ctx(ctx).Debug().Msg("getting tags from branch")
+
+	cmd := p.git(ctx, "tag", "--merged", branch, `--format='{"sha":"%(objectname)","type": "%(objecttype)", "ref": "%(refname)"}'`)
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, simver.ErrGit.Trace(err)
@@ -125,11 +155,18 @@ func (p *ExecProvider) TagsFromBranch(ctx context.Context, branch string) ([]sim
 		tags = append(tags, simver.TagInfo{Name: name, Ref: dat.Ref})
 	}
 
+	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tags)).Any("tags", tags).Dur("dur", time.Since(start)).Msg("got tags from branch")
+
 	return tags, nil
 
 }
 
 func (p *ExecProvider) FetchTags(ctx context.Context) ([]simver.TagInfo, error) {
+
+	start := time.Now()
+
+	zerolog.Ctx(ctx).Debug().Msg("fetching tags")
+
 	cmd := p.git(ctx, "fetch", "--tags")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -137,6 +174,8 @@ func (p *ExecProvider) FetchTags(ctx context.Context) ([]simver.TagInfo, error) 
 	if err != nil {
 		return nil, simver.ErrGit.Trace(err)
 	}
+
+	zerolog.Ctx(ctx).Debug().Msg("printing tags")
 
 	// Fetch tags and their refs (commit hashes)
 	cmd = p.git(ctx, "show-ref", "--tags")
@@ -161,20 +200,39 @@ func (p *ExecProvider) FetchTags(ctx context.Context) ([]simver.TagInfo, error) 
 		tagInfos = append(tagInfos, simver.TagInfo{Name: name, Ref: ref})
 	}
 
+	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tagInfos)).Dur("duration", time.Since(start)).Any("tags", tagInfos).Msg("tags fetched")
+
 	return tagInfos, nil
 }
 
 func (p *ExecProvider) GetHeadRef(ctx context.Context) (string, error) {
+
+	zerolog.Ctx(ctx).Debug().Msg("getting head ref")
+
 	// Get the current HEAD ref
 	cmd := p.git(ctx, "rev-parse", "HEAD")
 	out, err := cmd.Output()
 	if err != nil {
 		return "", simver.ErrGit.Trace(err)
 	}
-	return strings.TrimSpace(string(out)), nil
+
+	res := strings.TrimSpace(string(out))
+
+	zerolog.Ctx(ctx).Debug().Str("ref", res).Msg("got head ref")
+
+	return res, nil
 }
 
 func (p *ExecProvider) CreateTag(ctx context.Context, tag simver.TagInfo) error {
+
+	ctx = zerolog.Ctx(ctx).With().Str("name", tag.Name).Str("ref", tag.Ref).Logger().WithContext(ctx)
+
+	if p.ReadOnly {
+		zerolog.Ctx(ctx).Debug().Msg("read only mode, skipping tag creation")
+		return nil
+	}
+
+	zerolog.Ctx(ctx).Debug().Msg("creating tag")
 
 	cmd := p.git(ctx, "tag", tag.Name, tag.Ref)
 	cmd.Stdout = os.Stdout
@@ -184,6 +242,8 @@ func (p *ExecProvider) CreateTag(ctx context.Context, tag simver.TagInfo) error 
 		return simver.ErrGit.Trace(err, "name="+tag.Name, "ref="+tag.Ref)
 	}
 
+	zerolog.Ctx(ctx).Debug().Msg("pushing tag")
+
 	cmd = p.git(ctx, "push", "origin", tag.Name)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -191,6 +251,8 @@ func (p *ExecProvider) CreateTag(ctx context.Context, tag simver.TagInfo) error 
 	if err != nil {
 		return simver.ErrGit.Trace(err, "name="+tag.Name, "ref="+tag.Ref)
 	}
+
+	zerolog.Ctx(ctx).Debug().Msg("tag created")
 
 	return nil
 }

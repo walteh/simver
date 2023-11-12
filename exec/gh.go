@@ -7,23 +7,9 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
 )
-
-type ExecGHProvider struct {
-	GHExecutable string
-	GitHubToken  string
-	RepoPath     string
-}
-
-// func NewGitHubCLIExecProvider(prov *ExecProvider, ghExecutable string) (*ExecGHProvider, error) {
-// 	return &ExecGHProvider{
-// 		GitProvider: prov,
-// 		GitHubToken: prov.Token,
-
-// 		GHExecutable: ghExecutable,
-// 	}, nil
-// }
 
 var _ simver.PRProvider = (*ExecGHProvider)(nil)
 
@@ -31,6 +17,8 @@ func (p *ExecGHProvider) gh(ctx context.Context, str ...string) *exec.Cmd {
 	env := []string{
 		"GITHUB_TOKEN" + "=" + p.GitHubToken,
 	}
+
+	zerolog.Ctx(ctx).Debug().Strs("args", str).Str("executable", p.GHExecutable).Msg("building gh command")
 
 	cmd := exec.CommandContext(ctx, p.GHExecutable, str...)
 	cmd.Dir = p.RepoPath
@@ -73,6 +61,10 @@ const (
 func (p *ExecGHProvider) GetPRDetails(ctx context.Context, prnum int) (*simver.PRDetails, error) {
 	// Implement getting PR details using exec and parsing the output of gh cli
 
+	ctx = zerolog.Ctx(ctx).With().Int("prnum", prnum).Logger().WithContext(ctx)
+
+	zerolog.Ctx(ctx).Debug().Msg("Getting PR details")
+
 	// https://docs.github.com/en/graphql/reference/objects#pullrequest
 	cmd := p.gh(ctx, "pr", "view", fmt.Sprintf("%d", prnum), "--json", githubPRDetailsCliQuery)
 	out, err := cmd.Output()
@@ -87,11 +79,19 @@ func (p *ExecGHProvider) GetPRDetails(ctx context.Context, prnum int) (*simver.P
 		return nil, simver.ErrGettingPRDetails.Trace(err)
 	}
 
+	prdets := dat.toPRDetails()
+
+	zerolog.Ctx(ctx).Debug().Any("PRDetails", prdets).Msg("Got PR details")
+
 	return dat.toPRDetails(), nil
 }
 
 func (p *ExecGHProvider) GetPRFromCommitAndBranch(ctx context.Context, commitHash string, branch string) (*simver.PRDetails, error) {
 	// gh pr list --search "4e9a1779f47a569c8ea36a15e52606a9363bac2d" --state all
+
+	ctx = zerolog.Ctx(ctx).With().Str("commitHash", commitHash).Str("branch", branch).Logger().WithContext(ctx)
+
+	zerolog.Ctx(ctx).Debug().Msg("Searching for PR")
 
 	cmd := p.gh(ctx, "pr", "list", "--search", commitHash, "--state", "all", "--head", branch, "--json", githubPRDetailsCliQuery)
 	out, err := cmd.Output()
@@ -106,5 +106,9 @@ func (p *ExecGHProvider) GetPRFromCommitAndBranch(ctx context.Context, commitHas
 		return nil, simver.ErrGettingPRDetails.Trace(err)
 	}
 
-	return dat.toPRDetails(), nil
+	dets := dat.toPRDetails()
+
+	zerolog.Ctx(ctx).Debug().Any("PRDetails", dets).Msg("Got PR details")
+
+	return dets, nil
 }
