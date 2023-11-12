@@ -1,0 +1,11 @@
+{
+    inpackage: false,
+    with-expecter: true,
+    testonly: false,
+    exported: true,
+    dir: gen/mockery,
+    outpkg: mockery,
+    filename: "{{.InterfaceName}}.{{.PackageName}}.mockery.go",
+    mockname: "Mock{{.InterfaceName}}_{{.PackageName}}",
+    packages: { github.com/walteh/simver: { interfaces: { Execution: {} } } },
+}
