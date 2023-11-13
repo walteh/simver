@@ -119,6 +119,8 @@ func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.
 	org := os.Getenv("GITHUB_REPOSITORY_OWNER")
 	repo := os.Getenv("GITHUB_REPOSITORY")
 
+	repo = strings.TrimPrefix(repo, org+"/")
+
 	c := &exec.GitProviderOpts{
 		RepoPath:      repoPath,
 		Token:         token,

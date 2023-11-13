@@ -52,10 +52,20 @@ func NewGHProvider(opts *GHProvierOpts) (simver.PRProvider, error) {
 		return nil, ErrExecGH.Trace("gh executable is required")
 	}
 
+	if opts.Org == "" {
+		return nil, ErrExecGH.Trace("org is required")
+	}
+
+	if opts.Repo == "" {
+		return nil, ErrExecGH.Trace("repo is required")
+	}
+
 	return &ghProvider{
 		GitHubToken:  opts.GitHubToken,
 		RepoPath:     opts.RepoPath,
 		GHExecutable: opts.GHExecutable,
+		Org:          opts.Org,
+		Repo:         opts.Repo,
 	}, nil
 }
 
