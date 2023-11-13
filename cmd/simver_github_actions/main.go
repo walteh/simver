@@ -116,6 +116,9 @@ func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.
 	repoPath := os.Getenv("GITHUB_WORKSPACE")
 	readOnly := os.Getenv("SIMVER_READ_ONLY")
 
+	org := os.Getenv("GITHUB_REPOSITORY_OWNER")
+	repo := os.Getenv("GITHUB_REPOSITORY")
+
 	c := &exec.GitProviderOpts{
 		RepoPath:      repoPath,
 		Token:         token,
@@ -130,6 +133,8 @@ func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.
 		GitHubToken:  token,
 		RepoPath:     repoPath,
 		GHExecutable: "gh",
+		Org:          org,
+		Repo:         repo,
 	}
 
 	git, err := exec.NewGitProvider(c)
