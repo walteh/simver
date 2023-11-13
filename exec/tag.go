@@ -50,7 +50,7 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simv
 
 	zerolog.Ctx(ctx).Debug().Msg("getting tags from branch")
 
-	cmd := p.git(ctx, "pull", "--ff-only", "--tags")
+	cmd := p.git(ctx, "pull", "--ff-only", "--tags", "origin", branch)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
