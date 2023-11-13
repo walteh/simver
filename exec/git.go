@@ -57,6 +57,14 @@ func (p *ExecProvider) CommitFromRef(ctx context.Context, str string) (string, e
 
 func (p *ExecProvider) Branch(ctx context.Context) (string, error) {
 
+	if os.Getenv("GITHUB_ACTIONS") == "true" {
+		head_ref := os.Getenv("GITHUB_HEAD_REF")
+		if head_ref != "" {
+			return head_ref, nil
+		}
+		return os.Getenv("GITHUB_REF"), nil
+	}
+
 	zerolog.Ctx(ctx).Debug().Msg("getting branch")
 
 	cmd := p.git(ctx, "branch", "--contains", "HEAD")
