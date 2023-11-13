@@ -30,8 +30,9 @@ func (p *ExecProvider) git(ctx context.Context, str ...string) *exec.Cmd {
 
 	zerolog.Ctx(ctx).Debug().Strs("args", str).Str("executable", p.GitExecutable).Msg("building git command")
 
-	cmd := exec.CommandContext(ctx, p.GitExecutable, str[1:]...)
+	cmd := exec.CommandContext(ctx, p.GitExecutable, str...)
 	cmd.Dir = p.RepoPath
+	cmd.Stderr = os.Stderr
 	cmd.Env = append(os.Environ(), env...)
 
 	return cmd
