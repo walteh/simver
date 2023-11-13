@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/k0kubun/pp/v3"
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
 	"github.com/walteh/simver/exec"
@@ -168,11 +167,8 @@ func main() {
 	ee, err := simver.LoadExecution(ctx, tagprov, prr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution")
-		f, r := terrors.Cause2(err)
-		if r {
-			pp.Println(f)
-		}
-		fmt.Printf("::error::error loading execution: %v\n", err)
+		fmt.Println(terrors.FormatErrorCaller(err))
+
 		os.Exit(1)
 	}
 
@@ -188,6 +184,8 @@ func main() {
 		if err != nil {
 			if tries > 5 {
 				zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
+				fmt.Println(terrors.FormatErrorCaller(err))
+
 				os.Exit(1)
 			}
 
@@ -195,6 +193,8 @@ func main() {
 			ee, err := simver.LoadExecution(ctx, tagprov, prr)
 			if err != nil {
 				zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
+				fmt.Println(terrors.FormatErrorCaller(err))
+
 				os.Exit(1)
 			}
 			tags := simver.NewTags(ee)
@@ -212,6 +212,8 @@ func main() {
 		err := tagprov.CreateTag(ctx, tag)
 		if err != nil {
 			zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
+			fmt.Println(terrors.FormatErrorCaller(err))
+
 			os.Exit(1)
 		}
 	}
