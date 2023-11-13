@@ -56,7 +56,7 @@ func (me *githubPR) toPRDetails() *simver.PRDetails {
 }
 
 const (
-	githubPRDetailsCliQuery = `num,mergeCommit,headRefOid,state,potentialMergeCommit,mergeStateStatus,baseRefName,headRefName`
+	githubPRDetailsCliQuery = `number,mergeCommit,headRefOid,state,potentialMergeCommit,mergeStateStatus,baseRefName,headRefName`
 )
 
 func (p *ExecGHProvider) GetPRDetails(ctx context.Context, prnum int) (*simver.PRDetails, error) {
