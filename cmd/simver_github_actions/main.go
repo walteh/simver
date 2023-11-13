@@ -25,12 +25,13 @@ type PullRequestResolver struct {
 }
 
 func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails, error) {
-	head_ref := os.Getenv("GITHUB_HEAD_REF")
+	head_ref := os.Getenv("GITHUB_REF")
 
-	if head_ref != "" {
+	if head_ref != "" && strings.HasPrefix(head_ref, "refs/pull/") {
 		// this is easy, we know that this is a pr event
 
 		num := strings.TrimPrefix(head_ref, "refs/pull/")
+		num = strings.TrimSuffix(num, "/merge")
 
 		n, err := strconv.Atoi(num)
 		if err != nil {
@@ -49,15 +50,23 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 		return pr, nil
 	}
 
-	// this is a push event, we need to find the PR (if any) that this push is for
-
-	// get the commit hash
-	commit, err := p.git.GetHeadRef(ctx)
-	if err != nil {
-		return nil, Err.Trace(err, "error getting commit hash")
+	if !strings.HasPrefix(head_ref, "refs/heads/") {
+		return nil, errors.New("not a PR event and not a push event")
 	}
 
-	pr, exists, err := p.gh.PRDetailsByCommit(ctx, commit)
+	branch := strings.TrimPrefix(head_ref, "refs/heads/")
+
+	sha := os.Getenv("GITHUB_SHA")
+
+	// // this is a push event, we need to find the PR (if any) that this push is for
+
+	// // get the commit hash
+	// commit, err := p.git.GetHeadRef(ctx)
+	// if err != nil {
+	// 	return nil, Err.Trace(err, "error getting commit hash")
+	// }
+
+	pr, exists, err := p.gh.PRDetailsByCommit(ctx, sha)
 	if err != nil {
 		return nil, Err.Trace(err, "error getting PR details by commit")
 	}
@@ -66,16 +75,16 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 		return pr, nil
 	}
 
-	// get the branch
-	branch, err := p.git.Branch(ctx)
-	if err != nil {
-		return nil, Err.Trace(err, "error getting branch")
-	}
+	// // get the branch
+	// branch, err := p.git.Branch(ctx)
+	// if err != nil {
+	// 	return nil, Err.Trace(err, "error getting branch")
+	// }
 
-	pr, exists, err = p.gh.PRDetailsByBranch(ctx, branch)
-	if err != nil {
-		return nil, Err.Trace(err, "error getting PR details by branch")
-	}
+	// pr, exists, err = p.gh.PRDetailsByBranch(ctx, branch)
+	// if err != nil {
+	// 	return nil, Err.Trace(err, "error getting PR details by branch")
+	// }
 
 	if exists {
 		return pr, nil
@@ -92,8 +101,8 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 		HeadBranch:           branch,
 		BaseBranch:           branch,
 		Merged:               true,
-		MergeCommit:          commit,
-		HeadCommit:           commit,
+		MergeCommit:          sha,
+		HeadCommit:           sha,
 		BaseCommit:           parent,
 		PotentialMergeCommit: "",
 	}, nil
