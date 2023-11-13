@@ -2,6 +2,7 @@ package simver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -212,7 +213,7 @@ func (e *rawExecution) HeadBranch() string {
 	return e.headBranch
 }
 
-func LoadExecution(ctx context.Context, prov GitProvider, prprov PRProvider) (Execution, error) {
+func LoadExecution(ctx context.Context, prov GitProvider, prprov PRProvider, tprov TagProvider) (Execution, error) {
 	// Check if the current commit is a PR merge
 	headRef, err := prov.CommitFromRef(ctx, "HEAD")
 	if err != nil {
@@ -225,12 +226,16 @@ func LoadExecution(ctx context.Context, prov GitProvider, prprov PRProvider) (Ex
 	}
 
 	// Check if the current commit is a PR merge
-	pr, err := prprov.GetPRFromCommitAndBranch(ctx, headRef, branch)
+	pr, err := prprov.PRDetailsByBranch(ctx, branch)
 	if err != nil {
-		return nil, err
+		pr2, err2 := prprov.PRDetailsByCommit(ctx, headRef)
+		if err != nil {
+			return nil, errors.Join(err, err2)
+		}
+		pr = pr2
 	}
 
-	headTags, err := prov.TagsFromCommit(ctx, headRef)
+	headTags, err := tprov.TagsFromCommit(ctx, headRef)
 	if err != nil {
 		return nil, err
 	}
@@ -240,17 +245,17 @@ func LoadExecution(ctx context.Context, prov GitProvider, prprov PRProvider) (Ex
 		return nil, err
 	}
 
-	baseTags, err := prov.TagsFromCommit(ctx, baseCommit)
+	baseTags, err := tprov.TagsFromCommit(ctx, baseCommit)
 	if err != nil {
 		return nil, err
 	}
 
-	branchTags, err := prov.TagsFromBranch(ctx, branch)
+	branchTags, err := tprov.TagsFromBranch(ctx, branch)
 	if err != nil {
 		return nil, err
 	}
 
-	baseBranchTags, err := prov.TagsFromBranch(ctx, pr.BaseBranch)
+	baseBranchTags, err := tprov.TagsFromBranch(ctx, pr.BaseBranch)
 	if err != nil {
 		return nil, err
 	}

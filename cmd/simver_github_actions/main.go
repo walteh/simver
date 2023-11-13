@@ -12,13 +12,17 @@ import (
 	"github.com/walteh/terrors"
 )
 
-func NewGitHubActionsProvider() (simver.GitProvider, simver.PRProvider, error) {
+var (
+	Err = terrors.New("simver.cmd.simver_github_actions.Err")
+)
+
+func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.PRProvider, error) {
 
 	token := os.Getenv("GITHUB_TOKEN")
 	repoPath := os.Getenv("GITHUB_WORKSPACE")
 	readOnly := os.Getenv("SIMVER_READ_ONLY")
 
-	c := &exec.ExecProvider{
+	c := &exec.GitProviderOpts{
 		RepoPath:      repoPath,
 		Token:         token,
 		User:          "github-actions[bot]",
@@ -28,13 +32,28 @@ func NewGitHubActionsProvider() (simver.GitProvider, simver.PRProvider, error) {
 		ReadOnly:      readOnly == "true" || readOnly == "1",
 	}
 
-	pr := &exec.ExecGHProvider{
+	pr := &exec.GHProvierOpts{
 		GitHubToken:  token,
 		RepoPath:     repoPath,
 		GHExecutable: "gh",
 	}
 
-	return c, pr, nil
+	git, err := exec.NewGitProvider(c)
+	if err != nil {
+		return nil, nil, nil, Err.Trace(err, "error creating git provider")
+	}
+
+	gh, err := exec.NewGHProvider(pr)
+	if err != nil {
+		return nil, nil, nil, Err.Trace(err, "error creating gh provider")
+	}
+
+	gha, err := NewGitProviderGithubActions(git)
+	if err != nil {
+		return nil, nil, nil, Err.Trace(err, "error creating gh provider")
+	}
+
+	return gha, git, gh, nil
 }
 
 func main() {
@@ -45,15 +64,15 @@ func main() {
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
-	gitprov, prprov, err := NewGitHubActionsProvider()
+	gitprov, tagprov, prprov, err := NewGitHubActionsProvider()
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error creating provider")
 		os.Exit(1)
 	}
 
-	ee, err := simver.LoadExecution(ctx, gitprov, prprov)
+	ee, err := simver.LoadExecution(ctx, gitprov, prprov, tagprov)
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Str("error_caller", terrors.FormatErrorCaller(err)).Msg("error loading execution")
+		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
 		os.Exit(1)
 	}
 
@@ -65,17 +84,17 @@ func main() {
 
 	for !reserved {
 
-		err := gitprov.CreateTag(ctx, reservedTag)
+		err := tagprov.CreateTag(ctx, reservedTag)
 		if err != nil {
 			if tries > 5 {
-				zerolog.Ctx(ctx).Error().Err(err).Msg("too many tries")
+				zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
 				os.Exit(1)
 			}
 
 			time.Sleep(1 * time.Second)
-			ee, err := simver.LoadExecution(ctx, gitprov, prprov)
+			ee, err := simver.LoadExecution(ctx, gitprov, prprov, tagprov)
 			if err != nil {
-				zerolog.Ctx(ctx).Error().Err(err).Msg("error loading execution")
+				zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
 				os.Exit(1)
 			}
 			tags := simver.NewTags(ee)
@@ -90,9 +109,9 @@ func main() {
 			continue
 		}
 
-		err := gitprov.CreateTag(ctx, tag)
+		err := tagprov.CreateTag(ctx, tag)
 		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msg("error creating tag")
+			zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
 			os.Exit(1)
 		}
 	}

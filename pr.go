@@ -14,7 +14,7 @@ type PRDetails struct {
 }
 
 type PRProvider interface {
-	GetPRDetails(ctx context.Context, prNumber int) (*PRDetails, error)
-	GetPRFromCommitAndBranch(ctx context.Context, commitHash string, branch string) (*PRDetails, error)
-	// Add other necessary methods related to PR operations
+	PRDetailsByPRNumber(ctx context.Context, prNumber int) (*PRDetails, error)
+	PRDetailsByCommit(ctx context.Context, commit string) (*PRDetails, error)
+	PRDetailsByBranch(ctx context.Context, branch string) (*PRDetails, error)
 }
