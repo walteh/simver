@@ -73,18 +73,22 @@ func (p *ExecGHProvider) GetPRDetails(ctx context.Context, prnum int) (*simver.P
 		return nil, simver.ErrGettingPRDetails.Trace(err)
 	}
 
-	var dat githubPR
+	var dat []githubPR
 
 	err = json.Unmarshal(out, &dat)
 	if err != nil {
 		return nil, simver.ErrGettingPRDetails.Trace(err)
 	}
 
-	prdets := dat.toPRDetails()
+	if len(dat) != 1 {
+		return nil, simver.ErrGettingPRDetails.Trace(fmt.Errorf("expected 1 PR, got %d", len(dat)))
+	}
+
+	prdets := dat[0].toPRDetails()
 
 	zerolog.Ctx(ctx).Debug().Any("PRDetails", prdets).Msg("Got PR details")
 
-	return dat.toPRDetails(), nil
+	return prdets, nil
 }
 
 func (p *ExecGHProvider) GetPRFromCommitAndBranch(ctx context.Context, commitHash string, branch string) (*simver.PRDetails, error) {
@@ -100,14 +104,18 @@ func (p *ExecGHProvider) GetPRFromCommitAndBranch(ctx context.Context, commitHas
 		return nil, simver.ErrGettingPRDetails.Trace(err)
 	}
 
-	var dat githubPR
+	var dat []githubPR
 
 	err = json.Unmarshal(out, &dat)
 	if err != nil {
 		return nil, simver.ErrGettingPRDetails.Trace(err)
 	}
 
-	dets := dat.toPRDetails()
+	if len(dat) != 1 {
+		return nil, simver.ErrGettingPRDetails.Trace(fmt.Errorf("expected 1 PR, got %d", len(dat)))
+	}
+
+	dets := dat[0].toPRDetails()
 
 	zerolog.Ctx(ctx).Debug().Any("PRDetails", dets).Msg("Got PR details")
 
