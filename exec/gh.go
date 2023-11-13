@@ -15,7 +15,7 @@ var _ simver.PRProvider = (*ExecGHProvider)(nil)
 
 func (p *ExecGHProvider) gh(ctx context.Context, str ...string) *exec.Cmd {
 	env := []string{
-		"GITHUB_TOKEN" + "=" + p.GitHubToken,
+		"GH_TOKEN" + "=" + p.GitHubToken,
 	}
 
 	zerolog.Ctx(ctx).Debug().Strs("args", str).Str("executable", p.GHExecutable).Msg("building gh command")
