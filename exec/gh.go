@@ -142,7 +142,10 @@ func (p *ghProvider) PRDetailsByPRNumber(ctx context.Context, prnum int) (*simve
 		return nil, false, ErrExecGH.Trace(err)
 	}
 
-	return p.getRelevantPR(ctx, out)
+	byt := append([]byte("["), out...)
+	byt = append(byt, []byte("]")...)
+
+	return p.getRelevantPR(ctx, byt)
 }
 
 func (p *ghProvider) PRDetailsByBranch(ctx context.Context, branch string) (*simver.PRDetails, bool, error) {
