@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/k0kubun/pp/v3"
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
 	"github.com/walteh/simver/exec"
@@ -165,7 +167,12 @@ func main() {
 
 	ee, err := simver.LoadExecution(ctx, tagprov, prr)
 	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
+		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution")
+		f, r := terrors.Cause2(err)
+		if r {
+			pp.Println(f)
+		}
+		fmt.Printf("::error::error loading execution: %v\n", err)
 		os.Exit(1)
 	}
 
