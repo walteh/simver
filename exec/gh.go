@@ -22,6 +22,7 @@ func (p *ExecGHProvider) gh(ctx context.Context, str ...string) *exec.Cmd {
 
 	cmd := exec.CommandContext(ctx, p.GHExecutable, str...)
 	cmd.Dir = p.RepoPath
+	cmd.Stderr = os.Stderr
 	cmd.Env = append(os.Environ(), env...)
 
 	return cmd

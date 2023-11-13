@@ -59,7 +59,7 @@ func (p *ExecProvider) Branch(ctx context.Context) (string, error) {
 
 	zerolog.Ctx(ctx).Debug().Msg("getting branch")
 
-	cmd := p.git(ctx, "branch")
+	cmd := p.git(ctx, "branch", "--contains", "HEAD")
 	out, err := cmd.Output()
 	if err != nil {
 		return "", simver.ErrGit.Trace(err)
