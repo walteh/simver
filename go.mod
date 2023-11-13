@@ -5,7 +5,7 @@ go 1.21.4
 require (
 	github.com/rs/zerolog v1.31.0
 	github.com/stretchr/testify v1.8.4
-	github.com/walteh/snake v0.0.0-simver-test-a
+	github.com/walteh/snake v0.0.0-simver-test-b
 	github.com/walteh/terrors v0.2.6
 	golang.org/x/mod v0.14.0
 )

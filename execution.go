@@ -2,7 +2,6 @@ package simver
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -213,44 +212,29 @@ func (e *rawExecution) HeadBranch() string {
 	return e.headBranch
 }
 
-func LoadExecution(ctx context.Context, prov GitProvider, prprov PRProvider, tprov TagProvider) (Execution, error) {
-	// Check if the current commit is a PR merge
-	headRef, err := prov.CommitFromRef(ctx, "HEAD")
+func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Execution, error) {
+
+	pr, err := prr.CurrentPR(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	branch, err := prov.Branch(ctx)
+	_, err = tprov.FetchTags(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check if the current commit is a PR merge
-	pr, err := prprov.PRDetailsByBranch(ctx, branch)
-	if err != nil {
-		pr2, err2 := prprov.PRDetailsByCommit(ctx, headRef)
-		if err != nil {
-			return nil, errors.Join(err, err2)
-		}
-		pr = pr2
-	}
-
-	headTags, err := tprov.TagsFromCommit(ctx, headRef)
+	baseCommitTags, err := tprov.TagsFromCommit(ctx, pr.BaseCommit)
 	if err != nil {
 		return nil, err
 	}
 
-	baseCommit, err := prov.CommitFromRef(ctx, pr.BaseBranch)
+	headTags, err := tprov.TagsFromCommit(ctx, pr.HeadCommit)
 	if err != nil {
 		return nil, err
 	}
 
-	baseTags, err := tprov.TagsFromCommit(ctx, baseCommit)
-	if err != nil {
-		return nil, err
-	}
-
-	branchTags, err := tprov.TagsFromBranch(ctx, branch)
+	branchTags, err := tprov.TagsFromBranch(ctx, pr.HeadBranch)
 	if err != nil {
 		return nil, err
 	}
@@ -262,12 +246,12 @@ func LoadExecution(ctx context.Context, prov GitProvider, prprov PRProvider, tpr
 
 	return &rawExecution{
 		pr:             pr,
-		baseBranch:     branch,
+		baseBranch:     pr.BaseBranch,
 		headBranch:     pr.BaseBranch,
-		headCommit:     headRef,
-		baseCommit:     baseCommit,
+		headCommit:     pr.HeadCommit,
+		baseCommit:     pr.BaseCommit,
 		headCommitTags: headTags,
-		baseCommitTags: baseTags,
+		baseCommitTags: baseCommitTags,
 		baseBranchTags: branchTags,
 		headBranchTags: baseBranchTags,
 	}, nil

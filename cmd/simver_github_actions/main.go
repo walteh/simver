@@ -2,7 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -16,7 +19,88 @@ var (
 	Err = terrors.New("simver.cmd.simver_github_actions.Err")
 )
 
-func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.PRProvider, error) {
+type PullRequestResolver struct {
+	gh  simver.PRProvider
+	git simver.GitProvider
+}
+
+func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails, error) {
+	head_ref := os.Getenv("GITHUB_HEAD_REF")
+
+	if head_ref != "" {
+		// this is easy, we know that this is a pr event
+
+		num := strings.TrimPrefix(head_ref, "refs/pull/")
+
+		n, err := strconv.Atoi(num)
+		if err != nil {
+			return nil, Err.Trace(err, "error converting PR number to int")
+		}
+
+		pr, exists, err := p.gh.PRDetailsByPRNumber(ctx, n)
+		if err != nil {
+			return nil, Err.Trace(err, "error getting PR details by PR number")
+		}
+
+		if !exists {
+			return nil, errors.New("PR does not exist, but we are in a PR event")
+		}
+
+		return pr, nil
+	}
+
+	// this is a push event, we need to find the PR (if any) that this push is for
+
+	// get the commit hash
+	commit, err := p.git.GetHeadRef(ctx)
+	if err != nil {
+		return nil, Err.Trace(err, "error getting commit hash")
+	}
+
+	pr, exists, err := p.gh.PRDetailsByCommit(ctx, commit)
+	if err != nil {
+		return nil, Err.Trace(err, "error getting PR details by commit")
+	}
+
+	if exists {
+		return pr, nil
+	}
+
+	// get the branch
+	branch, err := p.git.Branch(ctx)
+	if err != nil {
+		return nil, Err.Trace(err, "error getting branch")
+	}
+
+	pr, exists, err = p.gh.PRDetailsByBranch(ctx, branch)
+	if err != nil {
+		return nil, Err.Trace(err, "error getting PR details by branch")
+	}
+
+	if exists {
+		return pr, nil
+	}
+
+	// get the parent commit
+	parent, err := p.git.CommitFromRef(ctx, "HEAD^")
+	if err != nil {
+		return nil, Err.Trace(err, "error getting parent commit")
+	}
+
+	return &simver.PRDetails{
+		Number:               0,
+		HeadBranch:           branch,
+		BaseBranch:           branch,
+		Merged:               true,
+		MergeCommit:          commit,
+		HeadCommit:           commit,
+		BaseCommit:           parent,
+		PotentialMergeCommit: "",
+	}, nil
+
+}
+
+func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.PRProvider, *PullRequestResolver, error) {
 
 	token := os.Getenv("GITHUB_TOKEN")
 	repoPath := os.Getenv("GITHUB_WORKSPACE")
@@ -40,20 +124,20 @@ func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.
 
 	git, err := exec.NewGitProvider(c)
 	if err != nil {
-		return nil, nil, nil, Err.Trace(err, "error creating git provider")
+		return nil, nil, nil, nil, Err.Trace(err, "error creating git provider")
 	}
 
 	gh, err := exec.NewGHProvider(pr)
 	if err != nil {
-		return nil, nil, nil, Err.Trace(err, "error creating gh provider")
+		return nil, nil, nil, nil, Err.Trace(err, "error creating gh provider")
 	}
 
 	gha, err := NewGitProviderGithubActions(git)
 	if err != nil {
-		return nil, nil, nil, Err.Trace(err, "error creating gh provider")
+		return nil, nil, nil, nil, Err.Trace(err, "error creating gh provider")
 	}
 
-	return gha, git, gh, nil
+	return gha, git, gh, &PullRequestResolver{gh, git}, nil
 }
 
 func main() {
@@ -64,13 +148,13 @@ func main() {
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
-	gitprov, tagprov, prprov, err := NewGitHubActionsProvider()
+	_, tagprov, _, prr, err := NewGitHubActionsProvider()
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error creating provider")
 		os.Exit(1)
 	}
 
-	ee, err := simver.LoadExecution(ctx, gitprov, prprov, tagprov)
+	ee, err := simver.LoadExecution(ctx, tagprov, prr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
 		os.Exit(1)
@@ -92,7 +176,7 @@ func main() {
 			}
 
 			time.Sleep(1 * time.Second)
-			ee, err := simver.LoadExecution(ctx, gitprov, prprov, tagprov)
+			ee, err := simver.LoadExecution(ctx, tagprov, prr)
 			if err != nil {
 				zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
 				os.Exit(1)

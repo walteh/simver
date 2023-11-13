@@ -31,6 +31,8 @@ github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcU
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
 github.com/walteh/snake v0.0.0-simver-test-a h1:D0d5gdguO5RistSDftQWM4JSxkwK8qNBq5Aqi6zuzOk=
 github.com/walteh/snake v0.0.0-simver-test-a/go.mod h1:2CyOw00AbrujT3hhI0CPQWQnYP/9NF9s9y3HmTQtDDs=
+github.com/walteh/snake v0.0.0-simver-test-b h1:tDW9kgZEFv9IpH9TKVHl0q0extqLf1iTzQwE6S+knWg=
+github.com/walteh/snake v0.0.0-simver-test-b/go.mod h1:2CyOw00AbrujT3hhI0CPQWQnYP/9NF9s9y3HmTQtDDs=
 github.com/walteh/snake v0.15.1 h1:7F/DG58MJrU7UyvxKsgW7g8OqtllPcIV8vacQ0iGWlQ=
 github.com/walteh/snake v0.15.1/go.mod h1:2CyOw00AbrujT3hhI0CPQWQnYP/9NF9s9y3HmTQtDDs=
 github.com/walteh/terrors v0.1.2 h1:UsA5HQ+oBTKXLaJFEvT5CW3Wfk5hGThHUxXuK3sA2jI=

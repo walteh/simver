@@ -21,12 +21,16 @@ type ghProvider struct {
 	GHExecutable string
 	GitHubToken  string
 	RepoPath     string
+	Org          string
+	Repo         string
 }
 
 type GHProvierOpts struct {
 	GitHubToken  string
 	RepoPath     string
 	GHExecutable string
+	Org          string
+	Repo         string
 }
 
 func NewGHProvider(opts *GHProvierOpts) (simver.PRProvider, error) {
@@ -101,26 +105,30 @@ const (
 	githubPRDetailsCliQuery = `number,mergeCommit,headRefOid,state,potentialMergeCommit,mergeStateStatus,baseRefName,headRefName`
 )
 
-func getRelevantPR(ctx context.Context, out []byte) (*simver.PRDetails, error) {
-	zerolog.Ctx(ctx).Debug().Msg("Listing PRs")
+func (p *ghProvider) getRelevantPR(ctx context.Context, out []byte) (*simver.PRDetails, bool, error) {
 
 	var dat []*githubPR
 
 	err := json.Unmarshal(out, &dat)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	for _, pr := range dat {
 		if pr.State == "MERGED" || pr.State == "OPEN" {
-			return pr.toPRDetails(), nil
+			dets := pr.toPRDetails()
+			dets.BaseCommit, err = p.getBaseCommit(ctx, dets)
+			if err != nil {
+				return nil, false, err
+			}
+			return dets, true, nil
 		}
 	}
 
-	return nil, fmt.Errorf("no relevant PR found")
+	return nil, false, nil
 }
 
-func (p *ghProvider) PRDetailsByPRNumber(ctx context.Context, prnum int) (*simver.PRDetails, error) {
+func (p *ghProvider) PRDetailsByPRNumber(ctx context.Context, prnum int) (*simver.PRDetails, bool, error) {
 	// Implement getting PR details using exec and parsing the output of gh cli
 
 	ctx = zerolog.Ctx(ctx).With().Int("prnum", prnum).Logger().WithContext(ctx)
@@ -131,28 +139,13 @@ func (p *ghProvider) PRDetailsByPRNumber(ctx context.Context, prnum int) (*simve
 	cmd := p.gh(ctx, "pr", "view", fmt.Sprintf("%d", prnum), "--json", githubPRDetailsCliQuery)
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, ErrExecGH.Trace(err)
+		return nil, false, ErrExecGH.Trace(err)
 	}
 
-	var dat []githubPR
-
-	err = json.Unmarshal(out, &dat)
-	if err != nil {
-		return nil, ErrExecGH.Trace(err)
-	}
-
-	if len(dat) != 1 {
-		return nil, ErrExecGH.Trace(fmt.Errorf("expected 1 PR, got %d", len(dat)))
-	}
-
-	prdets := dat[0].toPRDetails()
-
-	zerolog.Ctx(ctx).Debug().Any("PRDetails", prdets).Msg("Got PR details")
-
-	return prdets, nil
+	return p.getRelevantPR(ctx, out)
 }
 
-func (p *ghProvider) PRDetailsByBranch(ctx context.Context, branch string) (*simver.PRDetails, error) {
+func (p *ghProvider) PRDetailsByBranch(ctx context.Context, branch string) (*simver.PRDetails, bool, error) {
 
 	ctx = zerolog.Ctx(ctx).With().Str("branch", branch).Logger().WithContext(ctx)
 
@@ -161,20 +154,50 @@ func (p *ghProvider) PRDetailsByBranch(ctx context.Context, branch string) (*sim
 	cmd := p.gh(ctx, "pr", "list", "--state", "all", "--head", branch, "--json", githubPRDetailsCliQuery)
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, ErrExecGH.Trace(err)
+		return nil, false, ErrExecGH.Trace(err)
 	}
 
-	prdets, err := getRelevantPR(ctx, out)
-	if err != nil {
-		return nil, ErrExecGH.Trace(err)
-	}
-
-	zerolog.Ctx(ctx).Debug().Any("PRDetails", prdets).Msg("Got PR details")
-
-	return prdets, nil
+	return p.getRelevantPR(ctx, out)
 }
 
-func (p *ghProvider) PRDetailsByCommit(ctx context.Context, commitHash string) (*simver.PRDetails, error) {
+func (p *ghProvider) getBaseCommit(ctx context.Context, dets *simver.PRDetails) (string, error) {
+	zerolog.Ctx(ctx).Debug().Msg("Getting base commit")
+
+	cmt := dets.PotentialMergeCommit
+
+	if cmt == "" {
+		cmt = dets.MergeCommit
+	}
+
+	if cmt == "" {
+		return "", ErrExecGH.Trace("no commit to get base commit from")
+	}
+
+	cmd := p.gh(ctx, "api", "-H", "Accept: application/vnd.github+json", fmt.Sprintf("/repos/%s/%s/git/commits/%s", p.Org, p.Repo, cmt))
+	out, err := cmd.Output()
+	if err != nil {
+		return "", ErrExecGH.Trace(err)
+	}
+
+	var dat struct {
+		Parents []struct {
+			Sha string `json:"sha"`
+		} `json:"parents"`
+	}
+
+	err = json.Unmarshal(out, &dat)
+	if err != nil {
+		return "", ErrExecGH.Trace(err)
+	}
+
+	if len(dat.Parents) < 1 {
+		return "", ErrExecGH.Trace("no parents found")
+	}
+
+	return dat.Parents[0].Sha, nil
+}
+
+func (p *ghProvider) PRDetailsByCommit(ctx context.Context, commitHash string) (*simver.PRDetails, bool, error) {
 	// Implement getting PR details using exec and parsing the output of gh cli
 
 	ctx = zerolog.Ctx(ctx).With().Str("commit", commitHash).Logger().WithContext(ctx)
@@ -185,15 +208,8 @@ func (p *ghProvider) PRDetailsByCommit(ctx context.Context, commitHash string) (
 	cmd := p.gh(ctx, "pr", "list", "--search", commitHash, "--state", "all", "--json", githubPRDetailsCliQuery)
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, ErrExecGH.Trace(err)
+		return nil, false, ErrExecGH.Trace(err)
 	}
 
-	prdets, err := getRelevantPR(ctx, out)
-	if err != nil {
-		return nil, ErrExecGH.Trace(err)
-	}
-
-	zerolog.Ctx(ctx).Debug().Any("PRDetails", prdets).Msg("Got PR details")
-
-	return prdets, nil
+	return p.getRelevantPR(ctx, out)
 }
