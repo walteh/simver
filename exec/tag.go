@@ -3,6 +3,7 @@ package exec
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -63,6 +64,8 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simv
 	if err != nil {
 		return nil, ErrExecGit.Trace(err)
 	}
+
+	fmt.Println(string(out))
 
 	lines := strings.Split(string(out), "\n")
 
