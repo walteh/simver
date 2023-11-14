@@ -70,6 +70,10 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simv
 	var tags []simver.TagInfo
 	for _, line := range lines {
 
+		if line == "" {
+			continue
+		}
+
 		var dat struct {
 			Sha  string `json:"sha"`
 			Type string `json:"type"`
