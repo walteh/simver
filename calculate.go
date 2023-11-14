@@ -20,9 +20,10 @@ var (
 	ErrValidatingCalculation = terrors.New("ErrValidatingCalculation")
 )
 
-func (me *Calculation) CalculateNewTagsRaw() ([]string, []string) {
+func (me *Calculation) CalculateNewTagsRaw() ([]string, []string, []string) {
 	baseTags := make([]string, 0)
 	headTags := make([]string, 0)
+	rootTags := make([]string, 0)
 
 	nvt := string(me.NextValidTag)
 
@@ -45,12 +46,12 @@ func (me *Calculation) CalculateNewTagsRaw() ([]string, []string) {
 	// if mmrt is invalid, then we need to reserve a new mmrt (which is the same as nvt)
 	if !validMmrt {
 		mmrt = nvt
-		baseTags = append(baseTags, nvt+"-reserved")
+		rootTags = append(rootTags, nvt+"-reserved")
 		baseTags = append(baseTags, nvt+fmt.Sprintf("-pr%d+base", me.PR))
 	}
 
 	// then finally we tag mmrt
 	headTags = append(headTags, mmrt+fmt.Sprintf("-pr%d+%d", me.PR, int(me.MyMostRecentBuild)+1))
 
-	return baseTags, headTags
+	return baseTags, headTags, rootTags
 }

@@ -60,7 +60,7 @@ func TestMmrt(t *testing.T) {
 			name:         "Invalid MMRT",
 			prNum:        3,
 			tags:         simver.Tags{simver.TagInfo{Name: "v1.2.3-pr3+0"}},
-			expectedMmrt: "",
+			expectedMmrt: "v1.2.3",
 		},
 		{
 			name:         "No MMRT",
@@ -72,15 +72,15 @@ func TestMmrt(t *testing.T) {
 			name:         "Non-Matching PR Number",
 			prNum:        3,
 			tags:         simver.Tags{simver.TagInfo{Name: "v1.2.3-pr1+base"}},
-			expectedMmrt: "",
+			expectedMmrt: "v1.2.3",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockExec := new(mockery.MockExecution_simver)
-			mockExec.EXPECT().PR().Return(tc.prNum)
-			mockExec.EXPECT().BaseCommitTags().Return(tc.tags)
+			// mockExec.EXPECT().PR().Return(tc.prNum)
+			mockExec.EXPECT().HeadBranchTags().Return(tc.tags)
 			result := simver.MyMostRecentTag(mockExec)
 			mockExec.AssertExpectations(t)
 			assert.Equal(t, tc.expectedMmrt, result)
@@ -114,7 +114,7 @@ func TestMrrt(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockExec := new(mockery.MockExecution_simver)
-			mockExec.EXPECT().BaseBranchTags().Return(tc.tags)
+			mockExec.EXPECT().RootBranchTags().Return(tc.tags)
 			result := simver.MostRecentReservedTag(mockExec)
 			mockExec.AssertExpectations(t)
 			assert.Equal(t, tc.expectedMrrt, result)
@@ -184,6 +184,12 @@ func TestNvt(t *testing.T) {
 	}
 }
 
+const (
+	root_ref = "root_ref"
+	base_ref = "base_ref"
+	head_ref = "head_ref"
+)
+
 func TestNewTags(t *testing.T) {
 	testCases := []struct {
 		name           string
@@ -207,18 +213,18 @@ func TestNewTags(t *testing.T) {
 			baseCommitTags: simver.Tags{},
 			baseBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.3"}},
 			headBranchTags: simver.Tags{},
-			headCommit:     "head123",
-			baseCommit:     "base456",
-			rootCommit:     "root789",
+			headCommit:     head_ref,
+			baseCommit:     base_ref,
+			rootCommit:     root_ref,
 			rootBranchTags: simver.Tags{},
 			rootCommitTags: simver.Tags{},
 			pr:             0,
 			isMerged:       false,
 			isMinor:        false,
 			expectedTags: simver.Tags{
-				simver.TagInfo{Name: "v1.2.4-pr0+1", Ref: "head123"},
-				simver.TagInfo{Name: "v1.2.4-reserved", Ref: "base456"},
-				simver.TagInfo{Name: "v1.2.4-pr0+base", Ref: "base456"},
+				simver.TagInfo{Name: "v1.2.4-pr0+1", Ref: head_ref},
+				simver.TagInfo{Name: "v1.2.4-reserved", Ref: root_ref},
+				simver.TagInfo{Name: "v1.2.4-pr0+base", Ref: base_ref},
 			},
 		},
 		{
@@ -227,67 +233,73 @@ func TestNewTags(t *testing.T) {
 			baseCommitTags: simver.Tags{},
 			baseBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.3"}},
 			headBranchTags: simver.Tags{},
-			headCommit:     "head123",
-			baseCommit:     "base456",
-			rootCommit:     "root789",
+			headCommit:     head_ref,
+			baseCommit:     base_ref,
+			rootCommit:     root_ref,
 			rootBranchTags: simver.Tags{},
 			rootCommitTags: simver.Tags{},
 			pr:             99,
 			isMerged:       false,
 			isMinor:        true,
 			expectedTags: simver.Tags{
-				simver.TagInfo{Name: "v1.3.0-pr99+1", Ref: "head123"},
-				simver.TagInfo{Name: "v1.3.0-reserved", Ref: "base456"},
-				simver.TagInfo{Name: "v1.3.0-pr99+base", Ref: "base456"},
+				simver.TagInfo{Name: "v1.3.0-pr99+1", Ref: head_ref},
+				simver.TagInfo{Name: "v1.3.0-reserved", Ref: root_ref},
+				simver.TagInfo{Name: "v1.3.0-pr99+base", Ref: base_ref},
 			},
 		},
 		{
 			name:           "PR Merge with Valid MMRT",
 			headCommitTags: simver.Tags{},
-			baseCommitTags: simver.Tags{simver.TagInfo{Name: "v1.2.4-reserved"}, simver.TagInfo{Name: "v1.2.4-pr1+base"}},
+			baseCommitTags: simver.Tags{simver.TagInfo{Name: "v1.2.4-pr1+base"}},
 			baseBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.3"}},
 			headBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.4-pr1+1002"}},
-			headCommit:     "head123",
-			baseCommit:     "base456",
-			rootCommit:     "root789",
-			rootBranchTags: simver.Tags{},
+			headCommit:     head_ref,
+			baseCommit:     base_ref,
+			rootCommit:     root_ref,
+			rootBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.4-reserved"}},
 			rootCommitTags: simver.Tags{},
 			pr:             1,
 			isMerged:       false,
 			isMinor:        false,
-			expectedTags:   simver.Tags{simver.TagInfo{Name: "v1.2.4-pr1+1003", Ref: "head123"}},
+			expectedTags: simver.Tags{
+				simver.TagInfo{Name: "v1.2.4-pr1+1003", Ref: head_ref},
+			},
 		},
 		{
 			name:           "PR Merge with No MMRT",
 			headCommitTags: simver.Tags{},
-			baseCommitTags: simver.Tags{simver.TagInfo{Name: "v1.5.9-reserved"}, simver.TagInfo{Name: "v1.5.9-pr87+base"}},
+			baseCommitTags: simver.Tags{simver.TagInfo{Name: "v1.5.9-pr87+base"}},
 			baseBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.3"}},
 			headBranchTags: simver.Tags{simver.TagInfo{Name: "v1.5.9-pr87+1002"}},
-			headCommit:     "head123",
-			baseCommit:     "base456",
-			rootCommit:     "root789",
-			rootBranchTags: simver.Tags{},
+			headCommit:     head_ref,
+			baseCommit:     base_ref,
+			rootCommit:     root_ref,
+			rootBranchTags: simver.Tags{simver.TagInfo{Name: "v1.5.9-reserved"}},
 			rootCommitTags: simver.Tags{},
 			pr:             87,
 			isMerged:       false,
 			isMinor:        false,
-			expectedTags:   simver.Tags{simver.TagInfo{Name: "v1.5.9-pr87+1003", Ref: "head123"}},
+			expectedTags: simver.Tags{
+				simver.TagInfo{Name: "v1.5.9-pr87+1003", Ref: head_ref},
+			},
 		},
 		{
 			name:           "PR Merge with Invalid MMRT",
-			headCommitTags: simver.Tags{simver.TagInfo{Name: "v1.2.99999-pr2+base"}},
-			baseCommitTags: simver.Tags{simver.TagInfo{Name: "v1.2.3-reserved"}, simver.TagInfo{Name: "v1.2.4-pr2+base"}},
+			headCommitTags: simver.Tags{simver.TagInfo{Name: "v1.2.999999-pr2+5"}},
+			baseCommitTags: simver.Tags{simver.TagInfo{Name: "v1.2.4-pr2+base"}},
 			baseBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.3"}},
-			headBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.99999-pr2+base"}},
-			headCommit:     "head123",
-			baseCommit:     "base456",
-			rootCommit:     "root789",
-			rootBranchTags: simver.Tags{},
+			headBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.4-pr2+5"}},
+			headCommit:     head_ref,
+			baseCommit:     base_ref,
+			rootCommit:     root_ref,
+			rootBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.3-reserved"}},
 			rootCommitTags: simver.Tags{},
 			pr:             2,
 			isMerged:       false,
 			isMinor:        false,
-			expectedTags:   simver.Tags{simver.TagInfo{Name: "v1.2.4-pr2+1", Ref: "head123"}},
+			expectedTags: simver.Tags{
+				simver.TagInfo{Name: "v1.2.4-pr2+6", Ref: head_ref},
+			},
 		},
 		{
 			name:           "No Tags Available for PR Commit",
@@ -295,9 +307,9 @@ func TestNewTags(t *testing.T) {
 			baseCommitTags: simver.Tags{},
 			baseBranchTags: simver.Tags{},
 			headBranchTags: simver.Tags{},
-			headCommit:     "head123",
-			baseCommit:     "base123",
-			rootCommit:     "root789",
+			headCommit:     head_ref,
+			baseCommit:     base_ref,
+			rootCommit:     root_ref,
 			rootBranchTags: simver.Tags{},
 			rootCommitTags: simver.Tags{},
 			pr:             0,
@@ -306,11 +318,11 @@ func TestNewTags(t *testing.T) {
 			expectedTags: simver.Tags{
 				// we also need to reserve the next version tag
 				// which should be v0.2.0 since the base branch is main
-				simver.TagInfo{Name: "v0.2.0-reserved", Ref: "base123"},
-				simver.TagInfo{Name: "v0.2.0-pr0+base", Ref: "base123"},
+				simver.TagInfo{Name: "v0.2.0-reserved", Ref: root_ref},
+				simver.TagInfo{Name: "v0.2.0-pr0+base", Ref: base_ref},
 				// and finally, we need to tag the commit with the PR number
 				// since the base branch is main, we set it to v0.2.0-pr0
-				simver.TagInfo{Name: "v0.2.0-pr0+1", Ref: "head123"},
+				simver.TagInfo{Name: "v0.2.0-pr0+1", Ref: head_ref},
 			},
 		},
 		{
@@ -319,9 +331,9 @@ func TestNewTags(t *testing.T) {
 			baseCommitTags: simver.Tags{},
 			baseBranchTags: simver.Tags{},
 			headBranchTags: simver.Tags{},
-			headCommit:     "head123",
-			baseCommit:     "base123",
-			rootCommit:     "root789",
+			headCommit:     head_ref,
+			baseCommit:     base_ref,
+			rootCommit:     root_ref,
 			rootBranchTags: simver.Tags{},
 			rootCommitTags: simver.Tags{},
 			pr:             2,
@@ -330,27 +342,29 @@ func TestNewTags(t *testing.T) {
 			expectedTags: simver.Tags{
 				// since this is a merge we do not need to reserve anything
 				// since the base branch is main, we set it to v0.2.0
-				simver.TagInfo{Name: "v0.2.0-pr2+1", Ref: "head123"},
+				simver.TagInfo{Name: "v0.2.0-pr2+1", Ref: head_ref},
 				// we need to make sure we have a reserved tag for the base branch
-				simver.TagInfo{Name: "v0.2.0-reserved", Ref: "base123"},
-				simver.TagInfo{Name: "v0.2.0-pr2+base", Ref: "base123"},
+				simver.TagInfo{Name: "v0.2.0-reserved", Ref: root_ref},
+				simver.TagInfo{Name: "v0.2.0-pr2+base", Ref: base_ref},
 			},
 		},
 		{
 			name:           "merge",
 			headCommitTags: simver.Tags{},
 			baseCommitTags: simver.Tags{simver.TagInfo{Name: "v1.5.9-reserved"}, simver.TagInfo{Name: "v1.5.9-pr87+base"}},
+			rootCommitTags: simver.Tags{},
 			baseBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.3"}},
 			headBranchTags: simver.Tags{simver.TagInfo{Name: "v1.5.9-pr87+1002"}},
-			headCommit:     "head123",
-			baseCommit:     "base456",
-			rootCommit:     "root789",
 			rootBranchTags: simver.Tags{},
-			rootCommitTags: simver.Tags{},
+			headCommit:     head_ref,
+			baseCommit:     base_ref,
+			rootCommit:     root_ref,
 			pr:             87,
 			isMerged:       true,
 			isMinor:        false,
-			expectedTags:   simver.Tags{simver.TagInfo{Name: "v1.5.9-pr87+1003", Ref: "head123"}},
+			expectedTags: simver.Tags{
+				simver.TagInfo{Name: "v1.5.9-pr87+1003", Ref: head_ref},
+			},
 		},
 	}
 

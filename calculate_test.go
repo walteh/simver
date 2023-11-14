@@ -13,6 +13,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 		calculation      *simver.Calculation
 		expectedBaseTags []string
 		expectedHeadTags []string
+		expectedRootTags []string
 	}{
 		{
 			name: "expired mmrt",
@@ -25,11 +26,13 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				NextValidTag:          "v99.99.99",
 			},
 			expectedBaseTags: []string{
-				"v99.99.99-reserved",
 				"v99.99.99-pr85+base",
 			},
 			expectedHeadTags: []string{
 				"v99.99.99-pr85+34",
+			},
+			expectedRootTags: []string{
+				"v99.99.99-reserved",
 			},
 		},
 		{
@@ -43,11 +46,13 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				NextValidTag:          "v3.3.3",
 			},
 			expectedBaseTags: []string{
-				"v3.3.3-reserved",
 				"v3.3.3-pr1+base",
 			},
 			expectedHeadTags: []string{
 				"v3.3.3-pr1+2",
+			},
+			expectedRootTags: []string{
+				"v3.3.3-reserved",
 			},
 		},
 		{
@@ -62,6 +67,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			},
 			expectedBaseTags: []string{},
 			expectedHeadTags: []string{"v1.2.4-pr1+34"},
+			expectedRootTags: []string{},
 		},
 
 		{
@@ -75,27 +81,35 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				NextValidTag:          "v1.2.6",
 			},
 			expectedBaseTags: []string{
-				"v1.2.6-reserved",
 				"v1.2.6-pr1+base",
 			},
 			expectedHeadTags: []string{
 				"v1.2.6-pr1+34",
 			},
+			expectedRootTags: []string{
+				"v1.2.6-reserved",
+			},
 		},
+
 		// Add more test cases here...
 	}
 
 	for _, tc := range testCases {
-		for _, i := range []string{"base", "head"} {
+		for _, i := range []string{"base", "head", "root"} {
 			t.Run(tc.name+"_"+i, func(t *testing.T) {
-				baseTags, headTags := tc.calculation.CalculateNewTagsRaw()
+				baseTags, headTags, rootTags := tc.calculation.CalculateNewTagsRaw()
 
 				if i == "base" {
 					require.NotContains(t, baseTags, "", "Base tags contain empty string")
 					require.ElementsMatch(t, tc.expectedBaseTags, baseTags, "Base tags do not match")
-				} else {
+				} else if i == "head" {
 					require.NotContains(t, headTags, "", "Head tags contain empty string")
 					require.ElementsMatch(t, tc.expectedHeadTags, headTags, "Head tags do not match")
+				} else if i == "root" {
+					require.NotContains(t, rootTags, "", "Root tags contain empty string")
+					require.ElementsMatch(t, tc.expectedRootTags, rootTags, "Root tags do not match")
+				} else {
+					require.Fail(t, "invalid test case")
 				}
 			})
 		}

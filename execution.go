@@ -51,7 +51,7 @@ func NewCaclulation(ctx context.Context, ex Execution) *Calculation {
 func NewTags(ctx context.Context, ex Execution) Tags {
 	calc := NewCaclulation(ctx, ex)
 
-	baseTags, headTags := calc.CalculateNewTagsRaw()
+	baseTags, headTags, rootTags := calc.CalculateNewTagsRaw()
 
 	tags := make(Tags, 0)
 	for _, tag := range baseTags {
@@ -59,6 +59,9 @@ func NewTags(ctx context.Context, ex Execution) Tags {
 	}
 	for _, tag := range headTags {
 		tags = append(tags, TagInfo{Name: tag, Ref: ex.HeadCommit()})
+	}
+	for _, tag := range rootTags {
+		tags = append(tags, TagInfo{Name: tag, Ref: ex.RootCommit()})
 	}
 
 	return tags
@@ -69,6 +72,17 @@ type MRRT string // most recent reserved tag
 type NVT string  // next valid tag
 type MMRT string // my most recent tag
 type MMRBN int   // my most recent build number
+type MRT string  // my reserved tag
+
+func MyMostRecentReservedTag(e Execution) MRT {
+	reg := regexp.MustCompile(fmt.Sprintf(`^v\d+\.\d+\.\d+-pr%d+\+base$`, e.PR()))
+	highest, err := e.RootBranchTags().HighestSemverMatching(reg)
+	if err != nil {
+		return ""
+	}
+
+	return MRT(strings.Split(semver.Canonical(highest), "-")[0])
+}
 
 func MostRecentLiveTag(e Execution) MRLT {
 	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+(|-\S+\+\d+)$`)
@@ -81,8 +95,8 @@ func MostRecentLiveTag(e Execution) MRLT {
 }
 
 func MyMostRecentTag(e Execution) MMRT {
-	reg := regexp.MustCompile(fmt.Sprintf(`^v\d+\.\d+\.\d+-pr%d+\+base$`, e.PR()))
-	highest, err := e.BaseCommitTags().HighestSemverMatching(reg)
+	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+.*$`)
+	highest, err := e.HeadBranchTags().HighestSemverMatching(reg)
 	if err != nil {
 		return ""
 	}
@@ -92,7 +106,7 @@ func MyMostRecentTag(e Execution) MMRT {
 
 func MostRecentReservedTag(e Execution) MRRT {
 	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+-reserved$`)
-	highest, err := e.BaseBranchTags().HighestSemverMatching(reg)
+	highest, err := e.RootBranchTags().HighestSemverMatching(reg)
 	if err != nil {
 		return ""
 	}
@@ -179,165 +193,5 @@ func GetNextValidTag(ctx context.Context, minor bool, mrlt MRLT, mrrt MRRT) NVT 
 		Msg("calculated next valid tag")
 
 	return NVT(fmt.Sprintf("%s.%d.%d", semver.Major(max), minornum, patchnum))
-
-}
-
-var _ Execution = &rawExecution{}
-
-type rawExecution struct {
-	pr             *PRDetails
-	baseBranch     string
-	headBranch     string
-	rootBranch     string
-	headCommit     string
-	baseCommit     string
-	rootCommit     string
-	rootBranchTags Tags
-	rootCommitTags Tags
-	headCommitTags Tags
-	baseCommitTags Tags
-	baseBranchTags Tags
-	headBranchTags Tags
-	isMerged       bool
-	isMinor        bool
-}
-
-func (e *rawExecution) BaseCommit() string {
-	return e.baseCommit
-}
-
-func (e *rawExecution) HeadCommit() string {
-	return e.headCommit
-}
-
-func (e *rawExecution) BaseCommitTags() Tags {
-	return e.baseCommitTags
-}
-
-func (e *rawExecution) HeadCommitTags() Tags {
-	return e.headCommitTags
-}
-
-func (e *rawExecution) BaseBranchTags() Tags {
-	return e.baseBranchTags
-}
-
-func (e *rawExecution) HeadBranchTags() Tags {
-	return e.headBranchTags
-}
-
-func (e *rawExecution) PR() int {
-	return e.pr.Number
-}
-
-// func (e *rawExecution) BaseBranch() string {
-// 	return e.baseBranch
-// }
-
-// func (e *rawExecution) HeadBranch() string {
-// 	return e.headBranch
-// }
-
-func (e *rawExecution) IsMerged() bool {
-	return e.pr.Merged
-}
-
-func (e *rawExecution) RootCommit() string {
-	return e.rootCommit
-}
-
-func (e *rawExecution) RootBranch() string {
-	return e.rootBranch
-}
-
-func (e *rawExecution) RootBranchTags() Tags {
-	return e.rootBranchTags
-}
-
-func (e *rawExecution) RootCommitTags() Tags {
-	return e.rootCommitTags
-}
-
-func (e *rawExecution) IsMinor() bool {
-	return e.baseBranch == e.rootBranch
-}
-
-func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Execution, *PRDetails, bool, error) {
-
-	pr, err := prr.CurrentPR(ctx)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	if pr.Number == 0 && pr.HeadBranch != "main" {
-		return nil, nil, false, nil
-	}
-
-	_, err = tprov.FetchTags(ctx)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	baseCommitTags, err := tprov.TagsFromCommit(ctx, pr.BaseCommit)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	baseBranchTags, err := tprov.TagsFromBranch(ctx, pr.BaseBranch)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	rootCommitTags, err := tprov.TagsFromCommit(ctx, pr.RootCommit)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	rootBranchTags, err := tprov.TagsFromBranch(ctx, pr.RootBranch)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	hc := pr.HeadCommit
-
-	if pr.Merged {
-		hc = pr.MergeCommit
-	}
-
-	headTags, err := tprov.TagsFromCommit(ctx, hc)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	branchTags, err := tprov.TagsFromBranch(ctx, pr.HeadBranch)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	zerolog.Ctx(ctx).Debug().
-		Any("baseCommitTags", baseCommitTags).
-		Any("baseBranchTags", baseBranchTags).
-		Any("rootCommitTags", rootCommitTags).
-		Any("rootBranchTags", rootBranchTags).
-		Any("headTags", headTags).
-		Any("branchTags", branchTags).
-		Any("pr", pr).
-		Msg("loaded tags")
-
-	return &rawExecution{
-		pr:             pr,
-		baseBranch:     pr.BaseBranch,
-		headBranch:     pr.BaseBranch,
-		headCommit:     pr.HeadCommit,
-		baseCommit:     pr.BaseCommit,
-		headCommitTags: headTags,
-		baseCommitTags: baseCommitTags,
-		baseBranchTags: baseBranchTags,
-		headBranchTags: branchTags,
-		rootBranch:     pr.RootBranch,
-		rootCommit:     pr.RootCommit,
-		rootBranchTags: rootBranchTags,
-		rootCommitTags: rootCommitTags,
-	}, pr, true, nil
 
 }
