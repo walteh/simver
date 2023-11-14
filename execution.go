@@ -251,7 +251,13 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		return nil, nil, false, err
 	}
 
-	headTags, err := tprov.TagsFromCommit(ctx, pr.HeadCommit)
+	hc := pr.HeadCommit
+
+	if pr.Merged {
+		hc = pr.MergeCommit
+	}
+
+	headTags, err := tprov.TagsFromCommit(ctx, hc)
 	if err != nil {
 		return nil, nil, false, err
 	}
