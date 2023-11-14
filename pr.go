@@ -7,15 +7,14 @@ type PRDetails struct {
 	Number               int
 	HeadBranch           string
 	BaseBranch           string
+	RootBranch           string // always main
 	Merged               bool
 	MergeCommit          string
 	HeadCommit           string
-	BaseCommit           string
 	PotentialMergeCommit string
-}
 
-func (d *PRDetails) IsReal() bool {
-	return d.Number != 0
+	BaseCommit string
+	RootCommit string
 }
 
 type PRProvider interface {

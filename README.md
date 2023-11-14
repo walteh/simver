@@ -91,3 +91,14 @@ two bugs:
 1. find the mrrt and mrlt, calculate the nvt
 2. create a new tag (based on nvt) on the head commit with no build number or prerelease
 
+
+
+
+
+
+when you merge a pr:
+- find the mmrt or the pr branch, and we need to start using that for this branch
+- the base branch should inherit the mmrt from the pr branch
+- so we need to create:
+	1. a new "base" tag for the base branch with the mmrt of the pr branch
+	2. create a new build tag using the mmrt

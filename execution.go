@@ -13,17 +13,24 @@ import (
 
 type Execution interface {
 	PR() int
+	IsMinor() bool
+	IsMerged() bool
 	HeadCommit() string
 	BaseCommit() string
 
-	HeadBranch() string
-	BaseBranch() string
+	// HeadBranch() string
+	// BaseBranch() string
 
 	HeadCommitTags() Tags
 	BaseCommitTags() Tags
 
 	HeadBranchTags() Tags
 	BaseBranchTags() Tags
+
+	RootCommit() string
+	// RootBranch() string // always main
+	RootBranchTags() Tags
+	RootCommitTags() Tags
 }
 
 const baseTag = "v0.1.0"
@@ -37,7 +44,7 @@ func NewCaclulation(ctx context.Context, ex Execution) *Calculation {
 		MyMostRecentTag:       MyMostRecentTag(ex),
 		MyMostRecentBuild:     MyMostRecentBuildNumber(ex),
 		PR:                    ex.PR(),
-		NextValidTag:          GetNextValidTag(ctx, ex.BaseBranch() == "main", mrlt, mrrt),
+		NextValidTag:          GetNextValidTag(ctx, ex.IsMinor(), mrlt, mrrt),
 	}
 }
 
@@ -181,12 +188,18 @@ type rawExecution struct {
 	pr             *PRDetails
 	baseBranch     string
 	headBranch     string
+	rootBranch     string
 	headCommit     string
 	baseCommit     string
+	rootCommit     string
+	rootBranchTags Tags
+	rootCommitTags Tags
 	headCommitTags Tags
 	baseCommitTags Tags
 	baseBranchTags Tags
 	headBranchTags Tags
+	isMerged       bool
+	isMinor        bool
 }
 
 func (e *rawExecution) BaseCommit() string {
@@ -217,12 +230,36 @@ func (e *rawExecution) PR() int {
 	return e.pr.Number
 }
 
-func (e *rawExecution) BaseBranch() string {
-	return e.baseBranch
+// func (e *rawExecution) BaseBranch() string {
+// 	return e.baseBranch
+// }
+
+// func (e *rawExecution) HeadBranch() string {
+// 	return e.headBranch
+// }
+
+func (e *rawExecution) IsMerged() bool {
+	return e.pr.Merged
 }
 
-func (e *rawExecution) HeadBranch() string {
-	return e.headBranch
+func (e *rawExecution) RootCommit() string {
+	return e.rootCommit
+}
+
+func (e *rawExecution) RootBranch() string {
+	return e.rootBranch
+}
+
+func (e *rawExecution) RootBranchTags() Tags {
+	return e.rootBranchTags
+}
+
+func (e *rawExecution) RootCommitTags() Tags {
+	return e.rootCommitTags
+}
+
+func (e *rawExecution) IsMinor() bool {
+	return e.baseBranch == e.rootBranch
 }
 
 func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Execution, *PRDetails, bool, error) {
@@ -251,6 +288,16 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		return nil, nil, false, err
 	}
 
+	rootCommitTags, err := tprov.TagsFromCommit(ctx, pr.RootCommit)
+	if err != nil {
+		return nil, nil, false, err
+	}
+
+	rootBranchTags, err := tprov.TagsFromBranch(ctx, pr.RootBranch)
+	if err != nil {
+		return nil, nil, false, err
+	}
+
 	hc := pr.HeadCommit
 
 	if pr.Merged {
@@ -270,6 +317,8 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 	zerolog.Ctx(ctx).Debug().
 		Any("baseCommitTags", baseCommitTags).
 		Any("baseBranchTags", baseBranchTags).
+		Any("rootCommitTags", rootCommitTags).
+		Any("rootBranchTags", rootBranchTags).
 		Any("headTags", headTags).
 		Any("branchTags", branchTags).
 		Any("pr", pr).
@@ -285,6 +334,10 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		baseCommitTags: baseCommitTags,
 		baseBranchTags: baseBranchTags,
 		headBranchTags: branchTags,
+		rootBranch:     pr.RootBranch,
+		rootCommit:     pr.RootCommit,
+		rootBranchTags: rootBranchTags,
+		rootCommitTags: rootCommitTags,
 	}, pr, true, nil
 
 }

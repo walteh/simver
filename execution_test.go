@@ -114,7 +114,7 @@ func TestMrrt(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockExec := new(mockery.MockExecution_simver)
-			mockExec.EXPECT().BaseCommitTags().Return(tc.tags)
+			mockExec.EXPECT().BaseBranchTags().Return(tc.tags)
 			result := simver.MostRecentReservedTag(mockExec)
 			mockExec.AssertExpectations(t)
 			assert.Equal(t, tc.expectedMrrt, result)
@@ -191,11 +191,14 @@ func TestNewTags(t *testing.T) {
 		baseCommitTags simver.Tags
 		baseBranchTags simver.Tags
 		headBranchTags simver.Tags
-		headBranch     string
-		baseBranch     string
 		headCommit     string
 		baseCommit     string
+		rootCommit     string
+		rootBranchTags simver.Tags
+		rootCommitTags simver.Tags
 		pr             int
+		isMerged       bool
+		isMinor        bool
 		expectedTags   simver.Tags
 	}{
 		{
@@ -206,9 +209,12 @@ func TestNewTags(t *testing.T) {
 			headBranchTags: simver.Tags{},
 			headCommit:     "head123",
 			baseCommit:     "base456",
-			headBranch:     "feature",
-			baseBranch:     "main2",
+			rootCommit:     "root789",
+			rootBranchTags: simver.Tags{},
+			rootCommitTags: simver.Tags{},
 			pr:             0,
+			isMerged:       false,
+			isMinor:        false,
 			expectedTags: simver.Tags{
 				simver.TagInfo{Name: "v1.2.4-pr0+1", Ref: "head123"},
 				simver.TagInfo{Name: "v1.2.4-reserved", Ref: "base456"},
@@ -223,9 +229,12 @@ func TestNewTags(t *testing.T) {
 			headBranchTags: simver.Tags{},
 			headCommit:     "head123",
 			baseCommit:     "base456",
-			headBranch:     "feature",
-			baseBranch:     "main",
+			rootCommit:     "root789",
+			rootBranchTags: simver.Tags{},
+			rootCommitTags: simver.Tags{},
 			pr:             99,
+			isMerged:       false,
+			isMinor:        true,
 			expectedTags: simver.Tags{
 				simver.TagInfo{Name: "v1.3.0-pr99+1", Ref: "head123"},
 				simver.TagInfo{Name: "v1.3.0-reserved", Ref: "base456"},
@@ -240,9 +249,12 @@ func TestNewTags(t *testing.T) {
 			headBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.4-pr1+1002"}},
 			headCommit:     "head123",
 			baseCommit:     "base456",
-			headBranch:     "feature",
-			baseBranch:     "main2",
+			rootCommit:     "root789",
+			rootBranchTags: simver.Tags{},
+			rootCommitTags: simver.Tags{},
 			pr:             1,
+			isMerged:       false,
+			isMinor:        false,
 			expectedTags:   simver.Tags{simver.TagInfo{Name: "v1.2.4-pr1+1003", Ref: "head123"}},
 		},
 		{
@@ -253,9 +265,12 @@ func TestNewTags(t *testing.T) {
 			headBranchTags: simver.Tags{simver.TagInfo{Name: "v1.5.9-pr87+1002"}},
 			headCommit:     "head123",
 			baseCommit:     "base456",
-			headBranch:     "main",
-			baseBranch:     "main",
+			rootCommit:     "root789",
+			rootBranchTags: simver.Tags{},
+			rootCommitTags: simver.Tags{},
 			pr:             87,
+			isMerged:       false,
+			isMinor:        false,
 			expectedTags:   simver.Tags{simver.TagInfo{Name: "v1.5.9-pr87+1003", Ref: "head123"}},
 		},
 		{
@@ -266,9 +281,12 @@ func TestNewTags(t *testing.T) {
 			headBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.99999-pr2+base"}},
 			headCommit:     "head123",
 			baseCommit:     "base456",
-			headBranch:     "feature",
-			baseBranch:     "main",
+			rootCommit:     "root789",
+			rootBranchTags: simver.Tags{},
+			rootCommitTags: simver.Tags{},
 			pr:             2,
+			isMerged:       false,
+			isMinor:        false,
 			expectedTags:   simver.Tags{simver.TagInfo{Name: "v1.2.4-pr2+1", Ref: "head123"}},
 		},
 		{
@@ -279,9 +297,12 @@ func TestNewTags(t *testing.T) {
 			headBranchTags: simver.Tags{},
 			headCommit:     "head123",
 			baseCommit:     "base123",
-			headBranch:     "feature",
-			baseBranch:     "main",
+			rootCommit:     "root789",
+			rootBranchTags: simver.Tags{},
+			rootCommitTags: simver.Tags{},
 			pr:             0,
+			isMerged:       false,
+			isMinor:        true,
 			expectedTags: simver.Tags{
 				// we also need to reserve the next version tag
 				// which should be v0.2.0 since the base branch is main
@@ -300,9 +321,12 @@ func TestNewTags(t *testing.T) {
 			headBranchTags: simver.Tags{},
 			headCommit:     "head123",
 			baseCommit:     "base123",
-			headBranch:     "main",
-			baseBranch:     "main",
+			rootCommit:     "root789",
+			rootBranchTags: simver.Tags{},
+			rootCommitTags: simver.Tags{},
 			pr:             2,
+			isMerged:       false,
+			isMinor:        true,
 			expectedTags: simver.Tags{
 				// since this is a merge we do not need to reserve anything
 				// since the base branch is main, we set it to v0.2.0
@@ -311,6 +335,22 @@ func TestNewTags(t *testing.T) {
 				simver.TagInfo{Name: "v0.2.0-reserved", Ref: "base123"},
 				simver.TagInfo{Name: "v0.2.0-pr2+base", Ref: "base123"},
 			},
+		},
+		{
+			name:           "merge",
+			headCommitTags: simver.Tags{},
+			baseCommitTags: simver.Tags{simver.TagInfo{Name: "v1.5.9-reserved"}, simver.TagInfo{Name: "v1.5.9-pr87+base"}},
+			baseBranchTags: simver.Tags{simver.TagInfo{Name: "v1.2.3"}},
+			headBranchTags: simver.Tags{simver.TagInfo{Name: "v1.5.9-pr87+1002"}},
+			headCommit:     "head123",
+			baseCommit:     "base456",
+			rootCommit:     "root789",
+			rootBranchTags: simver.Tags{},
+			rootCommitTags: simver.Tags{},
+			pr:             87,
+			isMerged:       true,
+			isMinor:        false,
+			expectedTags:   simver.Tags{simver.TagInfo{Name: "v1.5.9-pr87+1003", Ref: "head123"}},
 		},
 	}
 
@@ -326,8 +366,12 @@ func TestNewTags(t *testing.T) {
 			mockExec.EXPECT().HeadBranchTags().Return(tc.headBranchTags)
 			mockExec.EXPECT().BaseBranchTags().Return(tc.baseBranchTags)
 			mockExec.EXPECT().PR().Return(tc.pr)
-			mockExec.EXPECT().HeadBranch().Return(tc.headBranch)
-			mockExec.EXPECT().BaseBranch().Return(tc.baseBranch)
+			mockExec.EXPECT().IsMinor().Return(tc.isMinor)
+			mockExec.EXPECT().IsMerged().Return(tc.isMerged)
+			mockExec.EXPECT().RootCommit().Return(tc.rootCommit)
+			// mockExec.EXPECT().RootBranch().Return(tc.rootBranch)
+			mockExec.EXPECT().RootBranchTags().Return(tc.rootBranchTags)
+			mockExec.EXPECT().RootCommitTags().Return(tc.rootCommitTags)
 
 			result := simver.NewTags(ctx, mockExec)
 			assert.ElementsMatch(t, tc.expectedTags, result)

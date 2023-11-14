@@ -26,6 +26,20 @@ type PullRequestResolver struct {
 }
 
 func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails, error) {
+	// is the an open, closed, or synchronized PR event?
+
+	// event := os.Getenv("GITHUB_EVENT_NAME")
+
+	// if event == "pull_request" {
+	// 	// this is easy, we know that this is a pr event
+	// } else if event == "pull_request_target" {
+	// 	// this is easy, we know that this is a pr event
+	// } else if event == "push" {
+	// 	// this is easy, we know that this is a push event
+	// } else {
+	// 	return nil, errors.New("not a PR event and not a push event")
+	// }
+
 	head_ref := os.Getenv("GITHUB_REF")
 
 	if head_ref != "" && strings.HasPrefix(head_ref, "refs/pull/") {
@@ -200,20 +214,20 @@ func main() {
 		}
 	}
 
-	havMergedTag := false
+	// havMergedTag := false
 
 	for _, tag := range tags {
 		if tag.Name == reservedTag.Name && tag.Ref == reservedTag.Ref {
 			continue
 		}
 
-		if prd.Merged {
-			if havMergedTag {
-				continue
-			}
-			havMergedTag = true
-			tag.Name = strings.Split(tag.Name, "-")[0]
-		}
+		// if prd.Merged {
+		// 	if havMergedTag {
+		// 		continue
+		// 	}
+		// 	havMergedTag = true
+		// 	tag.Name = strings.Split(tag.Name, "-")[0]
+		// }
 
 		err := tagprov.CreateTag(ctx, tag)
 		if err != nil {
