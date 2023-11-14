@@ -152,11 +152,14 @@ func main() {
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution")
 		fmt.Println(terrors.FormatErrorCaller(err))
-
 		os.Exit(1)
 	}
 
-	if !keepgoing {
+	isPush := os.Getenv("GITHUB_EVENT_NAME") == "push"
+
+	isMain := prd.HeadBranch == "main"
+
+	if !keepgoing || (isPush && !isMain) {
 		zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting")
 		os.Exit(0)
 	}
