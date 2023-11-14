@@ -171,7 +171,6 @@ func main() {
 	tries := 0
 
 	for reserved {
-
 		err := tagprov.CreateTag(ctx, reservedTag)
 		if err != nil {
 			if tries > 5 {
