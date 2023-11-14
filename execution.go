@@ -76,53 +76,73 @@ type MRT string  // my reserved tag
 
 func MyMostRecentReservedTag(e Execution) MRT {
 	reg := regexp.MustCompile(fmt.Sprintf(`^v\d+\.\d+\.\d+-pr%d+\+base$`, e.PR()))
-	highest, err := e.RootBranchTags().HighestSemverMatching(reg)
-	if err != nil {
+	highest := e.RootBranchTags().SemversMatching(func(s string) bool {
+		return reg.MatchString(s)
+	})
+
+	if len(highest) == 0 {
 		return ""
 	}
 
-	return MRT(strings.Split(semver.Canonical(highest), "-")[0])
+	return MRT(strings.Split(semver.Canonical(highest[len(highest)-1]), "-")[0])
 }
 
 func MostRecentLiveTag(e Execution) MRLT {
 	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+(|-\S+\+\d+)$`)
-	highest, err := e.BaseBranchTags().HighestSemverMatching(reg)
-	if err != nil {
+	highest := e.BaseBranchTags().SemversMatching(func(s string) bool {
+		return reg.MatchString(s)
+	})
+
+	if len(highest) == 0 {
 		return ""
 	}
 
-	return MRLT(strings.Split(semver.Canonical(highest), "-")[0])
+	return MRLT(strings.Split(semver.Canonical(highest[len(highest)-1]), "-")[0])
 }
 
 func MyMostRecentTag(e Execution) MMRT {
 	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+.*$`)
-	highest, err := e.HeadBranchTags().HighestSemverMatching(reg)
-	if err != nil {
+	highest := e.HeadBranchTags().SemversMatching(func(s string) bool {
+		if strings.Contains(s, "-reserved") {
+			return false
+		}
+		return reg.MatchString(s)
+	})
+
+	if len(highest) == 0 {
 		return ""
 	}
 
-	return MMRT(strings.Split(semver.Canonical(highest), "-")[0])
+	return MMRT(strings.Split(semver.Canonical(highest[len(highest)-1]), "-")[0])
 }
 
 func MostRecentReservedTag(e Execution) MRRT {
 	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+-reserved$`)
-	highest, err := e.RootBranchTags().HighestSemverMatching(reg)
-	if err != nil {
+	highest := e.RootBranchTags().SemversMatching(func(s string) bool {
+		return reg.MatchString(s)
+	})
+
+	if len(highest) == 0 {
 		return ""
 	}
 
-	return MRRT(strings.Split(semver.Canonical(highest), "-")[0])
+	return MRRT(strings.Split(semver.Canonical(highest[len(highest)-1]), "-")[0])
 }
 
 func MyMostRecentBuildNumber(e Execution) MMRBN {
 	reg := regexp.MustCompile(fmt.Sprintf(`^.*-pr%d+\+\d+$`, e.PR()))
-	highest, err := e.HeadBranchTags().HighestSemverMatching(reg)
-	if err != nil {
+	highest := e.HeadBranchTags().SemversMatching(func(s string) bool {
+		return reg.MatchString(s)
+	})
+
+	if len(highest) == 0 {
 		return 0
 	}
 
+	high := highest[0]
+
 	// get the build number
-	split := strings.Split(highest, "+")
+	split := strings.Split(high, "+")
 	if len(split) != 2 {
 		return 0
 	}

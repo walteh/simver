@@ -1,9 +1,6 @@
 package simver
 
 import (
-	"errors"
-	"regexp"
-	"sort"
 	"strings"
 
 	"golang.org/x/mod/semver"
@@ -28,27 +25,36 @@ func (t Tags) GetReserved() (TagInfo, bool) {
 }
 
 // HighestSemverContainingString finds the highest semantic version tag that contains the specified string.
-func (t Tags) HighestSemverMatching(matcher ...*regexp.Regexp) (string, error) {
+func (t Tags) HighestSemverMatching(matches []string) (string, error) {
+
+	// matches := t.SemversMatching(func(tag string) bool {
+	// 	for _, m := range matcher {
+	// 		if m.MatchString(tag) {
+	// 			return true
+	// 		}
+	// 	}
+	// 	return false
+	// })
+
+	semver.Sort(matches)
+
+	return matches[len(matches)-1], nil
+}
+
+func (t Tags) SemversMatching(matcher func(string) bool) []string {
 	var versions []string
 
-	for _, m := range matcher {
-		for _, tag := range t {
-			if m.MatchString(tag.Name) {
-				// Attempt to parse the semantic version from the tag
-				v := semver.Canonical(tag.Name)
-				if v != "" && semver.IsValid(v) {
-					versions = append(versions, tag.Name)
-				}
+	for _, tag := range t {
+		if matcher(tag.Name) {
+			// Attempt to parse the semantic version from the tag
+			v := semver.Canonical(tag.Name)
+			if v != "" && semver.IsValid(v) {
+				versions = append(versions, tag.Name)
 			}
 		}
-		if len(versions) == 0 {
-			return "", errors.New("no matching semantic versions found")
-		}
 	}
-	// Use sort to find the highest version
-	sort.Slice(versions, func(i, j int) bool {
-		return semver.Compare(versions[i], versions[j]) < 0
-	})
 
-	return versions[len(versions)-1], nil
+	semver.Sort(versions)
+
+	return versions
 }
