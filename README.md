@@ -33,7 +33,7 @@ inside this commits tree, the highest '*-pr.N+(this)' is the mmrbn.
 note each of the nvt, mrrt, mrlt, and mmrt are saved as valid semvers, so "X.Y.Z"
 the mmrbn is an integer, so "N"
 
------------
+------------
 
 two bugs:
 - need to make sure merges do not have build numbers
