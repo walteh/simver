@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rs/zerolog"
 	"golang.org/x/mod/semver"
 )
 
@@ -229,6 +230,11 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		return nil, err
 	}
 
+	baseBranchTags, err := tprov.TagsFromBranch(ctx, pr.BaseBranch)
+	if err != nil {
+		return nil, err
+	}
+
 	headTags, err := tprov.TagsFromCommit(ctx, pr.HeadCommit)
 	if err != nil {
 		return nil, err
@@ -239,10 +245,7 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		return nil, err
 	}
 
-	baseBranchTags, err := tprov.TagsFromBranch(ctx, pr.BaseBranch)
-	if err != nil {
-		return nil, err
-	}
+	zerolog.Ctx(ctx).Debug().Any("pr", pr).Any("baseCommitTags", baseCommitTags).Any("baseBranchTags", baseBranchTags).Any("headTags", headTags).Any("branchTags", branchTags).Msg("loaded execution")
 
 	return &rawExecution{
 		pr:             pr,

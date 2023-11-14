@@ -4,7 +4,7 @@ simple, pr based, semver git tagging logic
 
 # definitions
 
-## when is mmrt valid? 
+## when is mmrt valid?
 1. it exists
 2. it is higher than the mrlt
 
@@ -34,6 +34,11 @@ note each of the nvt, mrrt, mrlt, and mmrt are saved as valid semvers, so "X.Y.Z
 the mmrbn is an integer, so "N"
 
 -----------
+
+two bugs:
+- need to make sure merges do not have build numbers
+- need to make sure that build nums are picked up
+
 
 # process
 
