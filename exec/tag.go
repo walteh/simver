@@ -3,7 +3,6 @@ package exec
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -80,13 +79,9 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simv
 			Ref  string `json:"ref"`
 		}
 
-		fmt.Println(string(line))
-
 		line = strings.TrimSpace(line)
 		line = strings.TrimPrefix(line, "'")
 		line = strings.TrimSuffix(line, "'")
-
-		fmt.Println(string(line))
 
 		err = json.Unmarshal([]byte(line), &dat)
 		if err != nil {
