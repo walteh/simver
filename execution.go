@@ -15,22 +15,24 @@ type Execution interface {
 	PR() int
 	IsMinor() bool
 	IsMerged() bool
-	HeadCommit() string
-	BaseCommit() string
+	// HeadCommit() string
+	// BaseCommit() string
 
 	// HeadBranch() string
 	// BaseBranch() string
 
-	HeadCommitTags() Tags
-	BaseCommitTags() Tags
+	// HeadCommitTags() Tags
+	// BaseCommitTags() Tags
 
 	HeadBranchTags() Tags
 	BaseBranchTags() Tags
 
-	RootCommit() string
+	// RootCommit() string
 	// RootBranch() string // always main
 	RootBranchTags() Tags
-	RootCommitTags() Tags
+	// RootCommitTags() Tags
+
+	BuildTags(tags *CalculationOutput) Tags
 }
 
 const baseTag = "v0.1.0"
@@ -48,23 +50,21 @@ func NewCaclulation(ctx context.Context, ex Execution) *Calculation {
 	}
 }
 
-func NewTags(ctx context.Context, ex Execution) Tags {
+func NewTags(ctx context.Context, ex Execution) *CalculationOutput {
 	calc := NewCaclulation(ctx, ex)
 
-	baseTags, headTags, rootTags := calc.CalculateNewTagsRaw()
+	// tags := make(Tags, 0)
+	// for _, tag := range baseTags {
+	// 	tags = append(tags, TagInfo{Name: tag, Ref: ex.BaseCommit()})
+	// }
+	// for _, tag := range headTags {
+	// 	tags = append(tags, TagInfo{Name: tag, Ref: ex.HeadCommit()})
+	// }
+	// for _, tag := range rootTags {
+	// 	tags = append(tags, TagInfo{Name: tag, Ref: ex.RootCommit()})
+	// }
 
-	tags := make(Tags, 0)
-	for _, tag := range baseTags {
-		tags = append(tags, TagInfo{Name: tag, Ref: ex.BaseCommit()})
-	}
-	for _, tag := range headTags {
-		tags = append(tags, TagInfo{Name: tag, Ref: ex.HeadCommit()})
-	}
-	for _, tag := range rootTags {
-		tags = append(tags, TagInfo{Name: tag, Ref: ex.RootCommit()})
-	}
-
-	return tags
+	return calc.CalculateNewTagsRaw()
 }
 
 type MRLT string // most recent live tag

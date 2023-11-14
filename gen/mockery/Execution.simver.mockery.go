@@ -63,54 +63,13 @@ func (_c *MockExecution_simver_BaseBranchTags_Call) RunAndReturn(run func() simv
 	return _c
 }
 
-// BaseCommit provides a mock function with given fields:
-func (_m *MockExecution_simver) BaseCommit() string {
-	ret := _m.Called()
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// MockExecution_simver_BaseCommit_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BaseCommit'
-type MockExecution_simver_BaseCommit_Call struct {
-	*mock.Call
-}
-
-// BaseCommit is a helper method to define mock.On call
-func (_e *MockExecution_simver_Expecter) BaseCommit() *MockExecution_simver_BaseCommit_Call {
-	return &MockExecution_simver_BaseCommit_Call{Call: _e.mock.On("BaseCommit")}
-}
-
-func (_c *MockExecution_simver_BaseCommit_Call) Run(run func()) *MockExecution_simver_BaseCommit_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockExecution_simver_BaseCommit_Call) Return(_a0 string) *MockExecution_simver_BaseCommit_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockExecution_simver_BaseCommit_Call) RunAndReturn(run func() string) *MockExecution_simver_BaseCommit_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// BaseCommitTags provides a mock function with given fields:
-func (_m *MockExecution_simver) BaseCommitTags() simver.Tags {
-	ret := _m.Called()
+// BuildTags provides a mock function with given fields: tags
+func (_m *MockExecution_simver) BuildTags(tags *simver.CalculationOutput) simver.Tags {
+	ret := _m.Called(tags)
 
 	var r0 simver.Tags
-	if rf, ok := ret.Get(0).(func() simver.Tags); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(*simver.CalculationOutput) simver.Tags); ok {
+		r0 = rf(tags)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(simver.Tags)
@@ -120,29 +79,30 @@ func (_m *MockExecution_simver) BaseCommitTags() simver.Tags {
 	return r0
 }
 
-// MockExecution_simver_BaseCommitTags_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BaseCommitTags'
-type MockExecution_simver_BaseCommitTags_Call struct {
+// MockExecution_simver_BuildTags_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BuildTags'
+type MockExecution_simver_BuildTags_Call struct {
 	*mock.Call
 }
 
-// BaseCommitTags is a helper method to define mock.On call
-func (_e *MockExecution_simver_Expecter) BaseCommitTags() *MockExecution_simver_BaseCommitTags_Call {
-	return &MockExecution_simver_BaseCommitTags_Call{Call: _e.mock.On("BaseCommitTags")}
+// BuildTags is a helper method to define mock.On call
+//   - tags *simver.CalculationOutput
+func (_e *MockExecution_simver_Expecter) BuildTags(tags interface{}) *MockExecution_simver_BuildTags_Call {
+	return &MockExecution_simver_BuildTags_Call{Call: _e.mock.On("BuildTags", tags)}
 }
 
-func (_c *MockExecution_simver_BaseCommitTags_Call) Run(run func()) *MockExecution_simver_BaseCommitTags_Call {
+func (_c *MockExecution_simver_BuildTags_Call) Run(run func(tags *simver.CalculationOutput)) *MockExecution_simver_BuildTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(*simver.CalculationOutput))
 	})
 	return _c
 }
 
-func (_c *MockExecution_simver_BaseCommitTags_Call) Return(_a0 simver.Tags) *MockExecution_simver_BaseCommitTags_Call {
+func (_c *MockExecution_simver_BuildTags_Call) Return(_a0 simver.Tags) *MockExecution_simver_BuildTags_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockExecution_simver_BaseCommitTags_Call) RunAndReturn(run func() simver.Tags) *MockExecution_simver_BaseCommitTags_Call {
+func (_c *MockExecution_simver_BuildTags_Call) RunAndReturn(run func(*simver.CalculationOutput) simver.Tags) *MockExecution_simver_BuildTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -186,90 +146,6 @@ func (_c *MockExecution_simver_HeadBranchTags_Call) Return(_a0 simver.Tags) *Moc
 }
 
 func (_c *MockExecution_simver_HeadBranchTags_Call) RunAndReturn(run func() simver.Tags) *MockExecution_simver_HeadBranchTags_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// HeadCommit provides a mock function with given fields:
-func (_m *MockExecution_simver) HeadCommit() string {
-	ret := _m.Called()
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// MockExecution_simver_HeadCommit_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HeadCommit'
-type MockExecution_simver_HeadCommit_Call struct {
-	*mock.Call
-}
-
-// HeadCommit is a helper method to define mock.On call
-func (_e *MockExecution_simver_Expecter) HeadCommit() *MockExecution_simver_HeadCommit_Call {
-	return &MockExecution_simver_HeadCommit_Call{Call: _e.mock.On("HeadCommit")}
-}
-
-func (_c *MockExecution_simver_HeadCommit_Call) Run(run func()) *MockExecution_simver_HeadCommit_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockExecution_simver_HeadCommit_Call) Return(_a0 string) *MockExecution_simver_HeadCommit_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockExecution_simver_HeadCommit_Call) RunAndReturn(run func() string) *MockExecution_simver_HeadCommit_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// HeadCommitTags provides a mock function with given fields:
-func (_m *MockExecution_simver) HeadCommitTags() simver.Tags {
-	ret := _m.Called()
-
-	var r0 simver.Tags
-	if rf, ok := ret.Get(0).(func() simver.Tags); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(simver.Tags)
-		}
-	}
-
-	return r0
-}
-
-// MockExecution_simver_HeadCommitTags_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HeadCommitTags'
-type MockExecution_simver_HeadCommitTags_Call struct {
-	*mock.Call
-}
-
-// HeadCommitTags is a helper method to define mock.On call
-func (_e *MockExecution_simver_Expecter) HeadCommitTags() *MockExecution_simver_HeadCommitTags_Call {
-	return &MockExecution_simver_HeadCommitTags_Call{Call: _e.mock.On("HeadCommitTags")}
-}
-
-func (_c *MockExecution_simver_HeadCommitTags_Call) Run(run func()) *MockExecution_simver_HeadCommitTags_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockExecution_simver_HeadCommitTags_Call) Return(_a0 simver.Tags) *MockExecution_simver_HeadCommitTags_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockExecution_simver_HeadCommitTags_Call) RunAndReturn(run func() simver.Tags) *MockExecution_simver_HeadCommitTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -436,90 +312,6 @@ func (_c *MockExecution_simver_RootBranchTags_Call) Return(_a0 simver.Tags) *Moc
 }
 
 func (_c *MockExecution_simver_RootBranchTags_Call) RunAndReturn(run func() simver.Tags) *MockExecution_simver_RootBranchTags_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RootCommit provides a mock function with given fields:
-func (_m *MockExecution_simver) RootCommit() string {
-	ret := _m.Called()
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// MockExecution_simver_RootCommit_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RootCommit'
-type MockExecution_simver_RootCommit_Call struct {
-	*mock.Call
-}
-
-// RootCommit is a helper method to define mock.On call
-func (_e *MockExecution_simver_Expecter) RootCommit() *MockExecution_simver_RootCommit_Call {
-	return &MockExecution_simver_RootCommit_Call{Call: _e.mock.On("RootCommit")}
-}
-
-func (_c *MockExecution_simver_RootCommit_Call) Run(run func()) *MockExecution_simver_RootCommit_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockExecution_simver_RootCommit_Call) Return(_a0 string) *MockExecution_simver_RootCommit_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockExecution_simver_RootCommit_Call) RunAndReturn(run func() string) *MockExecution_simver_RootCommit_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RootCommitTags provides a mock function with given fields:
-func (_m *MockExecution_simver) RootCommitTags() simver.Tags {
-	ret := _m.Called()
-
-	var r0 simver.Tags
-	if rf, ok := ret.Get(0).(func() simver.Tags); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(simver.Tags)
-		}
-	}
-
-	return r0
-}
-
-// MockExecution_simver_RootCommitTags_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RootCommitTags'
-type MockExecution_simver_RootCommitTags_Call struct {
-	*mock.Call
-}
-
-// RootCommitTags is a helper method to define mock.On call
-func (_e *MockExecution_simver_Expecter) RootCommitTags() *MockExecution_simver_RootCommitTags_Call {
-	return &MockExecution_simver_RootCommitTags_Call{Call: _e.mock.On("RootCommitTags")}
-}
-
-func (_c *MockExecution_simver_RootCommitTags_Call) Run(run func()) *MockExecution_simver_RootCommitTags_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockExecution_simver_RootCommitTags_Call) Return(_a0 simver.Tags) *MockExecution_simver_RootCommitTags_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockExecution_simver_RootCommitTags_Call) RunAndReturn(run func() simver.Tags) *MockExecution_simver_RootCommitTags_Call {
 	_c.Call.Return(run)
 	return _c
 }

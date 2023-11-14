@@ -97,17 +97,17 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 	for _, tc := range testCases {
 		for _, i := range []string{"base", "head", "root"} {
 			t.Run(tc.name+"_"+i, func(t *testing.T) {
-				baseTags, headTags, rootTags := tc.calculation.CalculateNewTagsRaw()
+				out := tc.calculation.CalculateNewTagsRaw()
 
 				if i == "base" {
-					require.NotContains(t, baseTags, "", "Base tags contain empty string")
-					require.ElementsMatch(t, tc.expectedBaseTags, baseTags, "Base tags do not match")
+					require.NotContains(t, out.BaseTags, "", "Base tags contain empty string")
+					require.ElementsMatch(t, tc.expectedBaseTags, out.BaseTags, "Base tags do not match")
 				} else if i == "head" {
-					require.NotContains(t, headTags, "", "Head tags contain empty string")
-					require.ElementsMatch(t, tc.expectedHeadTags, headTags, "Head tags do not match")
+					require.NotContains(t, out.HeadTags, "", "Head tags contain empty string")
+					require.ElementsMatch(t, tc.expectedHeadTags, out.HeadTags, "Head tags do not match")
 				} else if i == "root" {
-					require.NotContains(t, rootTags, "", "Root tags contain empty string")
-					require.ElementsMatch(t, tc.expectedRootTags, rootTags, "Root tags do not match")
+					require.NotContains(t, out.RootTags, "", "Root tags contain empty string")
+					require.ElementsMatch(t, tc.expectedRootTags, out.RootTags, "Root tags do not match")
 				} else {
 					require.Fail(t, "invalid test case")
 				}

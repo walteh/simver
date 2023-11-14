@@ -373,22 +373,29 @@ func TestNewTags(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockExec := new(mockery.MockExecution_simver)
-			mockExec.EXPECT().HeadCommitTags().Return(tc.headCommitTags)
-			mockExec.EXPECT().BaseCommitTags().Return(tc.baseCommitTags)
-			mockExec.EXPECT().HeadCommit().Return(tc.headCommit)
-			mockExec.EXPECT().BaseCommit().Return(tc.baseCommit)
+			// mockExec.EXPECT().HeadCommitTags().Return(tc.headCommitTags)
+			// mockExec.EXPECT().BaseCommitTags().Return(tc.baseCommitTags)
+			// mockExec.EXPECT().HeadCommit().Return(tc.headCommit)
+			// mockExec.EXPECT().BaseCommit().Return(tc.baseCommit)
 			mockExec.EXPECT().HeadBranchTags().Return(tc.headBranchTags)
 			mockExec.EXPECT().BaseBranchTags().Return(tc.baseBranchTags)
 			mockExec.EXPECT().PR().Return(tc.pr)
 			mockExec.EXPECT().IsMinor().Return(tc.isMinor)
 			mockExec.EXPECT().IsMerged().Return(tc.isMerged)
-			mockExec.EXPECT().RootCommit().Return(tc.rootCommit)
+			// mockExec.EXPECT().RootCommit().Return(tc.rootCommit)
 			// mockExec.EXPECT().RootBranch().Return(tc.rootBranch)
 			mockExec.EXPECT().RootBranchTags().Return(tc.rootBranchTags)
-			mockExec.EXPECT().RootCommitTags().Return(tc.rootCommitTags)
+			// mockExec.EXPECT().RootCommitTags().Return(tc.rootCommitTags)
 
 			result := simver.NewTags(ctx, mockExec)
-			assert.ElementsMatch(t, tc.expectedTags, result)
+
+			got := result.ApplyRefs(&simver.ApplyRefsOpts{
+				HeadRef: head_ref,
+				BaseRef: base_ref,
+				RootRef: root_ref,
+			})
+
+			assert.ElementsMatch(t, tc.expectedTags, got)
 		})
 	}
 }

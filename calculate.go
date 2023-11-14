@@ -20,10 +20,38 @@ var (
 	ErrValidatingCalculation = terrors.New("ErrValidatingCalculation")
 )
 
-func (me *Calculation) CalculateNewTagsRaw() ([]string, []string, []string) {
-	baseTags := make([]string, 0)
-	headTags := make([]string, 0)
-	rootTags := make([]string, 0)
+type CalculationOutput struct {
+	BaseTags []string
+	HeadTags []string
+	RootTags []string
+}
+
+type ApplyRefsOpts struct {
+	HeadRef string
+	BaseRef string
+	RootRef string
+}
+
+func (out *CalculationOutput) ApplyRefs(opts *ApplyRefsOpts) Tags {
+	tags := make(Tags, 0)
+	for _, tag := range out.BaseTags {
+		tags = append(tags, TagInfo{Name: tag, Ref: opts.BaseRef})
+	}
+	for _, tag := range out.HeadTags {
+		tags = append(tags, TagInfo{Name: tag, Ref: opts.HeadRef})
+	}
+	for _, tag := range out.RootTags {
+		tags = append(tags, TagInfo{Name: tag, Ref: opts.RootRef})
+	}
+	return tags
+}
+
+func (me *Calculation) CalculateNewTagsRaw() *CalculationOutput {
+	out := &CalculationOutput{
+		BaseTags: []string{},
+		HeadTags: []string{},
+		RootTags: []string{},
+	}
 
 	nvt := string(me.NextValidTag)
 
@@ -46,12 +74,12 @@ func (me *Calculation) CalculateNewTagsRaw() ([]string, []string, []string) {
 	// if mmrt is invalid, then we need to reserve a new mmrt (which is the same as nvt)
 	if !validMmrt {
 		mmrt = nvt
-		rootTags = append(rootTags, nvt+"-reserved")
-		baseTags = append(baseTags, nvt+fmt.Sprintf("-pr%d+base", me.PR))
+		out.RootTags = append(out.RootTags, nvt+"-reserved")
+		out.BaseTags = append(out.BaseTags, nvt+fmt.Sprintf("-pr%d+base", me.PR))
 	}
 
 	// then finally we tag mmrt
-	headTags = append(headTags, mmrt+fmt.Sprintf("-pr%d+%d", me.PR, int(me.MyMostRecentBuild)+1))
+	out.HeadTags = append(out.HeadTags, mmrt+fmt.Sprintf("-pr%d+%d", me.PR, int(me.MyMostRecentBuild)+1))
 
-	return baseTags, headTags, rootTags
+	return out
 }

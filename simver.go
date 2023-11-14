@@ -26,21 +26,21 @@ type rawExecution struct {
 	isMinor        bool
 }
 
-func (e *rawExecution) BaseCommit() string {
-	return e.baseCommit
-}
+// func (e *rawExecution) BaseCommit() string {
+// 	return e.baseCommit
+// }
 
-func (e *rawExecution) HeadCommit() string {
-	return e.headCommit
-}
+// func (e *rawExecution) HeadCommit() string {
+// 	return e.headCommit
+// }
 
-func (e *rawExecution) BaseCommitTags() Tags {
-	return e.baseCommitTags
-}
+// func (e *rawExecution) BaseCommitTags() Tags {
+// 	return e.baseCommitTags
+// }
 
-func (e *rawExecution) HeadCommitTags() Tags {
-	return e.headCommitTags
-}
+// func (e *rawExecution) HeadCommitTags() Tags {
+// 	return e.headCommitTags
+// }
 
 func (e *rawExecution) BaseBranchTags() Tags {
 	return e.baseBranchTags
@@ -66,9 +66,9 @@ func (e *rawExecution) IsMerged() bool {
 	return e.pr.Merged
 }
 
-func (e *rawExecution) RootCommit() string {
-	return e.rootCommit
-}
+// func (e *rawExecution) RootCommit() string {
+// 	return e.rootCommit
+// }
 
 func (e *rawExecution) RootBranch() string {
 	return e.rootBranch
@@ -78,12 +78,20 @@ func (e *rawExecution) RootBranchTags() Tags {
 	return e.rootBranchTags
 }
 
-func (e *rawExecution) RootCommitTags() Tags {
-	return e.rootCommitTags
-}
+// func (e *rawExecution) RootCommitTags() Tags {
+// 	return e.rootCommitTags
+// }
 
 func (e *rawExecution) IsMinor() bool {
 	return e.baseBranch == e.rootBranch
+}
+
+func (e *rawExecution) BuildTags(tags *CalculationOutput) Tags {
+	return tags.ApplyRefs(&ApplyRefsOpts{
+		HeadRef: e.headCommit,
+		BaseRef: e.baseCommit,
+		RootRef: e.rootCommit,
+	})
 }
 
 func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Execution, *PRDetails, bool, error) {
