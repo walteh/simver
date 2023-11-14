@@ -65,8 +65,6 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simv
 		return nil, ErrExecGit.Trace(err)
 	}
 
-	fmt.Println(string(out))
-
 	lines := strings.Split(string(out), "\n")
 
 	var tags []simver.TagInfo
@@ -77,6 +75,14 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simv
 			Type string `json:"type"`
 			Ref  string `json:"ref"`
 		}
+
+		fmt.Println(string(line))
+
+		line = strings.TrimSpace(line)
+		line = strings.TrimPrefix(line, "'")
+		line = strings.TrimSuffix(line, "'")
+
+		fmt.Println(string(line))
 
 		err = json.Unmarshal([]byte(line), &dat)
 		if err != nil {
