@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rs/zerolog"
 	"golang.org/x/mod/semver"
 )
 
@@ -27,7 +28,7 @@ type Execution interface {
 
 const baseTag = "v0.1.0"
 
-func NewCaclulation(ex Execution) *Calculation {
+func NewCaclulation(ctx context.Context, ex Execution) *Calculation {
 	mrlt := MostRecentLiveTag(ex)
 	mrrt := MostRecentReservedTag(ex)
 	return &Calculation{
@@ -36,21 +37,21 @@ func NewCaclulation(ex Execution) *Calculation {
 		MyMostRecentTag:       MyMostRecentTag(ex),
 		MyMostRecentBuild:     MyMostRecentBuildNumber(ex),
 		PR:                    ex.PR(),
-		NextValidTag:          GetNextValidTag(ex.BaseBranch() == "main", mrlt, mrrt),
+		NextValidTag:          GetNextValidTag(ctx, ex.BaseBranch() == "main", mrlt, mrrt),
 	}
 }
 
-func NewTags(me Execution) Tags {
-	calc := NewCaclulation(me)
+func NewTags(ctx context.Context, ex Execution) Tags {
+	calc := NewCaclulation(ctx, ex)
 
 	baseTags, headTags := calc.CalculateNewTagsRaw()
 
 	tags := make(Tags, 0)
 	for _, tag := range baseTags {
-		tags = append(tags, TagInfo{Name: tag, Ref: me.BaseCommit()})
+		tags = append(tags, TagInfo{Name: tag, Ref: ex.BaseCommit()})
 	}
 	for _, tag := range headTags {
-		tags = append(tags, TagInfo{Name: tag, Ref: me.HeadCommit()})
+		tags = append(tags, TagInfo{Name: tag, Ref: ex.HeadCommit()})
 	}
 
 	return tags
@@ -112,7 +113,7 @@ func MyMostRecentBuildNumber(e Execution) MMRBN {
 	return MMRBN(n)
 }
 
-func GetNextValidTag(minor bool, mrlt MRLT, mrrt MRRT) NVT {
+func GetNextValidTag(ctx context.Context, minor bool, mrlt MRLT, mrrt MRRT) NVT {
 
 	var max string
 
@@ -157,6 +158,18 @@ func GetNextValidTag(minor bool, mrlt MRLT, mrrt MRRT) NVT {
 	} else {
 		patchnum++
 	}
+
+	zerolog.Ctx(ctx).Debug().
+		Str("max", max).
+		Str("maj", maj).
+		Str("majmin", majmin).
+		Str("patch", patch).
+		Str("min", min).
+		Str("mrlt", string(mrlt)).
+		Str("mrrt", string(mrrt)).
+		Int("minornum", minornum).
+		Int("patchnum", patchnum).
+		Msg("calculated next valid tag")
 
 	return NVT(fmt.Sprintf("%s.%d.%d", semver.Major(max), minornum, patchnum))
 
@@ -247,6 +260,14 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 	if err != nil {
 		return nil, nil, false, err
 	}
+
+	zerolog.Ctx(ctx).Debug().
+		Any("baseCommitTags", baseCommitTags).
+		Any("baseBranchTags", baseBranchTags).
+		Any("headTags", headTags).
+		Any("branchTags", branchTags).
+		Any("pr", pr).
+		Msg("loaded tags")
 
 	return &rawExecution{
 		pr:             pr,

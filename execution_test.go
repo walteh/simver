@@ -1,6 +1,7 @@
 package simver_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -173,9 +174,11 @@ func TestNvt(t *testing.T) {
 		},
 	}
 
+	ctx := context.Background()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := simver.GetNextValidTag(tc.minor, tc.mrlt, tc.mrrt)
+			result := simver.GetNextValidTag(ctx, tc.minor, tc.mrlt, tc.mrrt)
 			assert.Equal(t, tc.expectedNvt, result)
 		})
 	}
@@ -311,6 +314,8 @@ func TestNewTags(t *testing.T) {
 		},
 	}
 
+	ctx := context.Background()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockExec := new(mockery.MockExecution_simver)
@@ -324,7 +329,7 @@ func TestNewTags(t *testing.T) {
 			mockExec.EXPECT().HeadBranch().Return(tc.headBranch)
 			mockExec.EXPECT().BaseBranch().Return(tc.baseBranch)
 
-			result := simver.NewTags(mockExec)
+			result := simver.NewTags(ctx, mockExec)
 			assert.ElementsMatch(t, tc.expectedTags, result)
 		})
 	}
