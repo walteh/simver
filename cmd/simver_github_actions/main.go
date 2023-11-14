@@ -185,7 +185,7 @@ func main() {
 
 	tries := 0
 
-	for !reserved {
+	for reserved {
 
 		err := tagprov.CreateTag(ctx, reservedTag)
 		if err != nil {
@@ -207,7 +207,7 @@ func main() {
 			tags := simver.NewTags(ee)
 			reservedTag, reserved = tags.GetReserved()
 		} else {
-			reserved = true
+			reserved = false
 		}
 	}
 
