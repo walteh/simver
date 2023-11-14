@@ -59,33 +59,10 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 
 	sha := os.Getenv("GITHUB_SHA")
 
-	// // this is a push event, we need to find the PR (if any) that this push is for
-
-	// // get the commit hash
-	// commit, err := p.git.GetHeadRef(ctx)
-	// if err != nil {
-	// 	return nil, Err.Trace(err, "error getting commit hash")
-	// }
-
 	pr, exists, err := p.gh.PRDetailsByCommit(ctx, sha)
 	if err != nil {
 		return nil, Err.Trace(err, "error getting PR details by commit")
 	}
-
-	if exists {
-		return pr, nil
-	}
-
-	// // get the branch
-	// branch, err := p.git.Branch(ctx)
-	// if err != nil {
-	// 	return nil, Err.Trace(err, "error getting branch")
-	// }
-
-	// pr, exists, err = p.gh.PRDetailsByBranch(ctx, branch)
-	// if err != nil {
-	// 	return nil, Err.Trace(err, "error getting PR details by branch")
-	// }
 
 	if exists {
 		return pr, nil
@@ -171,12 +148,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	ee, prd, err := simver.LoadExecution(ctx, tagprov, prr)
+	ee, prd, keepgoing, err := simver.LoadExecution(ctx, tagprov, prr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution")
 		fmt.Println(terrors.FormatErrorCaller(err))
 
 		os.Exit(1)
+	}
+
+	if !keepgoing {
+		zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting")
+		os.Exit(0)
 	}
 
 	tags := simver.NewTags(ee)
@@ -197,12 +179,15 @@ func main() {
 			}
 
 			time.Sleep(1 * time.Second)
-			eez, prz, err := simver.LoadExecution(ctx, tagprov, prr)
+			eez, prz, keepgoing, err := simver.LoadExecution(ctx, tagprov, prr)
 			if err != nil {
 				zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
 				fmt.Println(terrors.FormatErrorCaller(err))
-
 				os.Exit(1)
+			}
+			if !keepgoing {
+				zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting")
+				os.Exit(0)
 			}
 			ee = eez
 			prd = prz
