@@ -63,7 +63,7 @@ type MMRT string // my most recent tag
 type MMRBN int   // my most recent build number
 
 func MostRecentLiveTag(e Execution) MRLT {
-	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
+	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+(|-\S+\+\d+)$`)
 	highest, err := e.BaseBranchTags().HighestSemverMatching(reg)
 	if err != nil {
 		return ""
