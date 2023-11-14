@@ -212,36 +212,36 @@ func (e *rawExecution) HeadBranch() string {
 	return e.headBranch
 }
 
-func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Execution, error) {
+func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Execution, *PRDetails, error) {
 
 	pr, err := prr.CurrentPR(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	_, err = tprov.FetchTags(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	baseCommitTags, err := tprov.TagsFromCommit(ctx, pr.BaseCommit)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	baseBranchTags, err := tprov.TagsFromBranch(ctx, pr.BaseBranch)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	headTags, err := tprov.TagsFromCommit(ctx, pr.HeadCommit)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	branchTags, err := tprov.TagsFromBranch(ctx, pr.HeadBranch)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	return &rawExecution{
@@ -254,6 +254,6 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		baseCommitTags: baseCommitTags,
 		baseBranchTags: baseBranchTags,
 		headBranchTags: branchTags,
-	}, nil
+	}, pr, nil
 
 }

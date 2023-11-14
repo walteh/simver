@@ -171,7 +171,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ee, err := simver.LoadExecution(ctx, tagprov, prr)
+	ee, prd, err := simver.LoadExecution(ctx, tagprov, prr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution")
 		fmt.Println(terrors.FormatErrorCaller(err))
@@ -197,13 +197,15 @@ func main() {
 			}
 
 			time.Sleep(1 * time.Second)
-			ee, err := simver.LoadExecution(ctx, tagprov, prr)
+			eez, prz, err := simver.LoadExecution(ctx, tagprov, prr)
 			if err != nil {
 				zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
 				fmt.Println(terrors.FormatErrorCaller(err))
 
 				os.Exit(1)
 			}
+			ee = eez
+			prd = prz
 			tags := simver.NewTags(ee)
 			reservedTag, reserved = tags.GetReserved()
 		} else {
@@ -211,9 +213,19 @@ func main() {
 		}
 	}
 
+	havMergedTag := false
+
 	for _, tag := range tags {
 		if tag.Name == reservedTag.Name && tag.Ref == reservedTag.Ref {
 			continue
+		}
+
+		if prd.Merged {
+			if havMergedTag {
+				continue
+			}
+			havMergedTag = true
+			tag.Name = strings.Split(tag.Name, "-")[0]
 		}
 
 		err := tagprov.CreateTag(ctx, tag)
