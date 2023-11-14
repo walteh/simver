@@ -84,7 +84,7 @@ func MyMostRecentTag(e Execution) MMRT {
 
 func MostRecentReservedTag(e Execution) MRRT {
 	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+-reserved$`)
-	highest, err := e.BaseCommitTags().HighestSemverMatching(reg)
+	highest, err := e.BaseBranchTags().HighestSemverMatching(reg)
 	if err != nil {
 		return ""
 	}
