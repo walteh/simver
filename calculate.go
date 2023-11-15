@@ -15,6 +15,7 @@ type Calculation struct {
 	PR                    int
 	NextValidTag          NVT
 	IsMerge               bool
+	ForcePatch            bool
 }
 
 var (
@@ -76,6 +77,12 @@ func (me *Calculation) CalculateNewTagsRaw() *CalculationOutput {
 	// first we validate that mmrt is still valid, which means it is greater than or equal to mrlt
 	if mmrt != "" && semver.Compare(mmrt, mrlt) > 0 {
 		validMmrt = true
+	}
+
+	// force patch is ignored if this is a merge
+	if me.ForcePatch && !me.IsMerge {
+		mmrt = BumpPatch(mmrt)
+		validMmrt = false
 	}
 
 	// if mmrt is invalid, then we need to reserve a new mmrt (which is the same as nvt)

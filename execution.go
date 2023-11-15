@@ -15,6 +15,7 @@ type Execution interface {
 	PR() int
 	IsMinor() bool
 	IsMerge() bool
+	HeadCommitTags() Tags
 	HeadBranchTags() Tags
 	BaseBranchTags() Tags
 	RootBranchTags() Tags
@@ -25,17 +26,30 @@ const baseTag = "v0.1.0"
 
 func Calculate(ctx context.Context, ex Execution) *Calculation {
 	mrlt := MostRecentLiveTag(ex)
+
 	mrrt := MostRecentReservedTag(ex)
+
+	mmrt := MyMostRecentTag(ex)
+
+	// // if mmrt already exists on head
+
+	// if ForcePatch(ctx, ex, mmrt) {
+	// 	mmrt = BumpPatch(mmrt)
+	// }
+
 	return &Calculation{
 		IsMerge:               ex.IsMerge(),
 		MostRecentLiveTag:     mrlt,
 		MostRecentReservedTag: mrrt,
-		MyMostRecentTag:       MyMostRecentTag(ex),
+		ForcePatch:            ForcePatch(ctx, ex, mmrt),
+		MyMostRecentTag:       mmrt,
 		MyMostRecentBuild:     MyMostRecentBuildNumber(ex),
 		PR:                    ex.PR(),
 		NextValidTag:          GetNextValidTag(ctx, ex.IsMinor(), mrlt, mrrt),
 	}
 }
+
+// type TagString string
 
 type MRLT string // most recent live tag
 type MRRT string // most recent reserved tag
@@ -44,21 +58,55 @@ type MMRT string // my most recent tag
 type MMRBN int   // my most recent build number
 type MRT string  // my reserved tag
 
-// func MyMostRecentReservedTag(e Execution) MRT {
-// 	reg := regexp.MustCompile(fmt.Sprintf(`^v\d+\.\d+\.\d+-pr%d+\+base$`, e.PR()))
-// 	highest := e.RootBranchTags().SemversMatching(func(s string) bool {
-// 		return reg.MatchString(s)
-// 	})
+func BumpPatch[S ~string](arg S) S {
 
-// 	if len(highest) == 0 {
-// 		return ""
-// 	}
+	maj := semver.MajorMinor(string(arg))
+	patch := strings.Split(strings.TrimPrefix(string(arg), maj), "-")[0]
 
-// 	return MRT(strings.Split(semver.Canonical(highest[len(highest)-1]), "-")[0])
-// }
+	patch = strings.TrimPrefix(patch, ".")
+
+	if patch == "" {
+		patch = "0"
+	}
+
+	patchnum, err := strconv.Atoi(patch)
+	if err != nil {
+		panic("patchnum is not a number somehow: " + patch)
+	}
+
+	patchnum++
+
+	return S(fmt.Sprintf("%s.%d", maj, patchnum))
+
+}
+
+func ForcePatch(ctx context.Context, ee Execution, mmrt MMRT) bool {
+	// if our head branch has a
+	reg := regexp.MustCompile(fmt.Sprintf(`^%s$`, mmrt))
+
+	// head commit tags matching mmrt
+	hct := ee.HeadCommitTags().SemversMatching(func(s string) bool {
+		return reg.MatchString(s)
+	})
+
+	if len(hct) > 0 {
+		return false
+	}
+
+	// head branch tags matching mmrt
+	hbt := ee.HeadBranchTags().SemversMatching(func(s string) bool {
+		return reg.MatchString(s)
+	})
+
+	if len(hbt) > 0 {
+		return true
+	}
+
+	return false
+}
 
 func MostRecentLiveTag(e Execution) MRLT {
-	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+(|-\S+\+\d+)$`)
+	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+$`)
 	highest := e.BaseBranchTags().SemversMatching(func(s string) bool {
 		return reg.MatchString(s)
 	})

@@ -197,6 +197,7 @@ func TestNewTags(t *testing.T) {
 		baseBranchTags simver.Tags
 		headBranchTags simver.Tags
 		rootBranchTags simver.Tags
+		headCommitTags simver.Tags
 		pr             int
 		isMerge        bool
 		isMinor        bool
@@ -206,6 +207,7 @@ func TestNewTags(t *testing.T) {
 			name:           "Normal Commit on Non-Main Base Branch",
 			baseBranchTags: simver.Tags{simver.Tag{Name: "v1.2.3"}},
 			headBranchTags: simver.Tags{},
+			headCommitTags: simver.Tags{},
 			rootBranchTags: simver.Tags{},
 			pr:             0,
 			isMerge:        false,
@@ -220,6 +222,7 @@ func TestNewTags(t *testing.T) {
 			name:           "Normal Commit on Main Branch",
 			baseBranchTags: simver.Tags{simver.Tag{Name: "v1.2.3"}},
 			headBranchTags: simver.Tags{},
+			headCommitTags: simver.Tags{},
 			rootBranchTags: simver.Tags{},
 			pr:             99,
 			isMerge:        false,
@@ -234,6 +237,7 @@ func TestNewTags(t *testing.T) {
 			name:           "PR Merge with Valid MMRT",
 			baseBranchTags: simver.Tags{simver.Tag{Name: "v1.2.3"}},
 			headBranchTags: simver.Tags{simver.Tag{Name: "v1.2.4-pr1+1002"}},
+			headCommitTags: simver.Tags{},
 			rootBranchTags: simver.Tags{simver.Tag{Name: "v1.2.4-reserved"}},
 			pr:             1,
 			isMerge:        false,
@@ -246,6 +250,7 @@ func TestNewTags(t *testing.T) {
 			name:           "PR Merge with No MMRT",
 			baseBranchTags: simver.Tags{simver.Tag{Name: "v1.2.3"}},
 			headBranchTags: simver.Tags{simver.Tag{Name: "v1.5.9-pr87+1002"}},
+			headCommitTags: simver.Tags{},
 			rootBranchTags: simver.Tags{simver.Tag{Name: "v1.5.9-reserved"}},
 			pr:             87,
 			isMerge:        false,
@@ -258,6 +263,7 @@ func TestNewTags(t *testing.T) {
 			name:           "PR Merge with Invalid MMRT",
 			baseBranchTags: simver.Tags{simver.Tag{Name: "v1.2.3"}},
 			headBranchTags: simver.Tags{simver.Tag{Name: "v1.2.4-pr2+5"}},
+			headCommitTags: simver.Tags{},
 			rootBranchTags: simver.Tags{simver.Tag{Name: "v1.2.3-reserved"}},
 			pr:             2,
 			isMerge:        false,
@@ -270,6 +276,7 @@ func TestNewTags(t *testing.T) {
 			name:           "No Tags Available for PR Commit",
 			baseBranchTags: simver.Tags{},
 			headBranchTags: simver.Tags{},
+			headCommitTags: simver.Tags{},
 			rootBranchTags: simver.Tags{},
 			pr:             0,
 			isMerge:        false,
@@ -288,6 +295,7 @@ func TestNewTags(t *testing.T) {
 			name:           "No Tags Available for PR Merge Commit",
 			baseBranchTags: simver.Tags{},
 			headBranchTags: simver.Tags{},
+			headCommitTags: simver.Tags{},
 			rootBranchTags: simver.Tags{},
 			pr:             2,
 			isMerge:        false,
@@ -305,6 +313,7 @@ func TestNewTags(t *testing.T) {
 			name:           "merge",
 			baseBranchTags: simver.Tags{simver.Tag{Name: "v1.5.9-pr84+12"}},
 			headBranchTags: simver.Tags{simver.Tag{Name: "v1.5.10-pr87+1002"}},
+			headCommitTags: simver.Tags{},
 			rootBranchTags: simver.Tags{
 				simver.Tag{Name: "v1.5.9-reserved"},
 				simver.Tag{Name: "v1.5.10-reserved"},
@@ -318,6 +327,26 @@ func TestNewTags(t *testing.T) {
 				simver.Tag{Name: "v1.5.10", Ref: merge_ref},
 			},
 		},
+		{
+			name:           "after merge",
+			baseBranchTags: simver.Tags{simver.Tag{Name: "v1.2.2"}},
+			headBranchTags: simver.Tags{simver.Tag{Name: "v1.5.10-pr84+1002"}, simver.Tag{Name: "v1.5.10"}},
+			headCommitTags: simver.Tags{},
+			rootBranchTags: simver.Tags{
+				simver.Tag{Name: "v1.5.9-reserved"},
+				simver.Tag{Name: "v1.5.10-reserved"},
+				simver.Tag{Name: "v1.5.0"},
+				simver.Tag{Name: "v1.5.9-pr84+base"},
+			},
+			pr:      84,
+			isMerge: false,
+			isMinor: false,
+			expectedTags: simver.Tags{
+				simver.Tag{Name: "v1.5.11-pr84+1003", Ref: head_ref},
+				simver.Tag{Name: "v1.5.11-reserved", Ref: root_ref},
+				simver.Tag{Name: "v1.5.11-pr84+base", Ref: base_ref},
+			},
+		},
 	}
 
 	ctx := context.Background()
@@ -326,6 +355,7 @@ func TestNewTags(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockExec := new(mockery.MockExecution_simver)
 			mockExec.EXPECT().HeadBranchTags().Return(tc.headBranchTags)
+			mockExec.EXPECT().HeadCommitTags().Return(tc.headCommitTags)
 			mockExec.EXPECT().BaseBranchTags().Return(tc.baseBranchTags)
 			mockExec.EXPECT().PR().Return(tc.pr)
 			mockExec.EXPECT().IsMinor().Return(tc.isMinor)
@@ -342,6 +372,45 @@ func TestNewTags(t *testing.T) {
 			})
 
 			assert.ElementsMatch(t, tc.expectedTags, got)
+		})
+	}
+}
+func TestTagString_BumpPatch(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    string
+		expected string
+		panic    bool
+	}{
+		{
+			name:     "BumpPatch with patch version",
+			input:    "v1.2.3",
+			expected: "v1.2.4",
+			panic:    false,
+		},
+		{
+			name:     "BumpPatch with no patch version",
+			input:    "v1.2",
+			expected: "v1.2.1",
+			panic:    false,
+		},
+		{
+			name:  "BumpPatch with invalid patch version",
+			input: "v1.2.x",
+			panic: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.panic {
+				assert.Panics(t, func() {
+					simver.BumpPatch(tc.input)
+				})
+				return
+			}
+			result := simver.BumpPatch(tc.input)
+			assert.Equal(t, tc.expected, result)
 		})
 	}
 }

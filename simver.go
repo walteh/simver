@@ -55,6 +55,10 @@ func (e *rawExecution) IsMinor() bool {
 	return e.baseBranch == e.rootBranch
 }
 
+func (e *rawExecution) HeadCommitTags() Tags {
+	return e.headCommitTags
+}
+
 func (e *rawExecution) BuildTags(tags *CalculationOutput) Tags {
 	return tags.ApplyRefs(&ApplyRefsOpts{
 		HeadRef:  e.headCommit,
