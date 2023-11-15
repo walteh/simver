@@ -89,9 +89,10 @@ func (e *rawExecution) IsMinor() bool {
 
 func (e *rawExecution) BuildTags(tags *CalculationOutput) Tags {
 	return tags.ApplyRefs(&ApplyRefsOpts{
-		HeadRef: e.headCommit,
-		BaseRef: e.baseCommit,
-		RootRef: e.rootCommit,
+		HeadRef:  e.headCommit,
+		BaseRef:  e.baseCommit,
+		RootRef:  e.rootCommit,
+		MergeRef: e.mergeCommit,
 	})
 }
 
@@ -171,6 +172,7 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		rootCommit:     pr.RootCommit,
 		rootBranchTags: rootBranchTags,
 		rootCommitTags: rootCommitTags,
+		mergeCommit:    pr.MergeCommit,
 	}, pr, true, nil
 
 }
