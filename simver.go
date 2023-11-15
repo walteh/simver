@@ -104,18 +104,22 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		return nil, nil, false, err
 	}
 
-	hc := pr.HeadCommit
+	var headBranchTags Tags
+	var headCommit string
 
 	if pr.Merged {
-		hc = pr.MergeCommit
+		headCommit = pr.MergeCommit
+		headBranchTags = baseBranchTags
+	} else {
+		headCommit = pr.HeadCommit
+		branchTags, err := tprov.TagsFromBranch(ctx, pr.HeadBranch)
+		if err != nil {
+			return nil, nil, false, err
+		}
+		headBranchTags = branchTags
 	}
 
-	headTags, err := tprov.TagsFromCommit(ctx, hc)
-	if err != nil {
-		return nil, nil, false, err
-	}
-
-	branchTags, err := tprov.TagsFromBranch(ctx, pr.HeadBranch)
+	headTags, err := tprov.TagsFromCommit(ctx, headCommit)
 	if err != nil {
 		return nil, nil, false, err
 	}
@@ -126,7 +130,7 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		Any("rootCommitTags", rootCommitTags).
 		Any("rootBranchTags", rootBranchTags).
 		Any("headTags", headTags).
-		Any("branchTags", branchTags).
+		Any("headBranchTags", headBranchTags).
 		Any("pr", pr).
 		Msg("loaded tags")
 
@@ -139,7 +143,7 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		headCommitTags: headTags,
 		baseCommitTags: baseCommitTags,
 		baseBranchTags: baseBranchTags,
-		headBranchTags: branchTags,
+		headBranchTags: headBranchTags,
 		rootBranch:     pr.RootBranch,
 		rootCommit:     pr.RootCommit,
 		rootBranchTags: rootBranchTags,
