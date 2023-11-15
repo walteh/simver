@@ -123,7 +123,7 @@ func MostRecentLiveTag(e Execution) MRLT {
 func MyMostRecentTag(e Execution) MMRT {
 	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+.*$`)
 	highest := e.HeadBranchTags().SemversMatching(func(s string) bool {
-		if strings.Contains(s, "-reserved") {
+		if strings.Contains(s, "-reserved") || strings.Contains(s, "-base") {
 			return false
 		}
 		return reg.MatchString(s)
