@@ -23,7 +23,7 @@ type Execution interface {
 
 const baseTag = "v0.1.0"
 
-func NewCaclulation(ctx context.Context, ex Execution) *Calculation {
+func Calculate(ctx context.Context, ex Execution) *Calculation {
 	mrlt := MostRecentLiveTag(ex)
 	mrrt := MostRecentReservedTag(ex)
 	return &Calculation{
@@ -37,23 +37,6 @@ func NewCaclulation(ctx context.Context, ex Execution) *Calculation {
 	}
 }
 
-func NewTags(ctx context.Context, ex Execution) *CalculationOutput {
-	calc := NewCaclulation(ctx, ex)
-
-	// tags := make(Tags, 0)
-	// for _, tag := range baseTags {
-	// 	tags = append(tags, TagInfo{Name: tag, Ref: ex.BaseCommit()})
-	// }
-	// for _, tag := range headTags {
-	// 	tags = append(tags, TagInfo{Name: tag, Ref: ex.HeadCommit()})
-	// }
-	// for _, tag := range rootTags {
-	// 	tags = append(tags, TagInfo{Name: tag, Ref: ex.RootCommit()})
-	// }
-
-	return calc.CalculateNewTagsRaw()
-}
-
 type MRLT string // most recent live tag
 type MRRT string // most recent reserved tag
 type NVT string  // next valid tag
@@ -61,18 +44,18 @@ type MMRT string // my most recent tag
 type MMRBN int   // my most recent build number
 type MRT string  // my reserved tag
 
-func MyMostRecentReservedTag(e Execution) MRT {
-	reg := regexp.MustCompile(fmt.Sprintf(`^v\d+\.\d+\.\d+-pr%d+\+base$`, e.PR()))
-	highest := e.RootBranchTags().SemversMatching(func(s string) bool {
-		return reg.MatchString(s)
-	})
+// func MyMostRecentReservedTag(e Execution) MRT {
+// 	reg := regexp.MustCompile(fmt.Sprintf(`^v\d+\.\d+\.\d+-pr%d+\+base$`, e.PR()))
+// 	highest := e.RootBranchTags().SemversMatching(func(s string) bool {
+// 		return reg.MatchString(s)
+// 	})
 
-	if len(highest) == 0 {
-		return ""
-	}
+// 	if len(highest) == 0 {
+// 		return ""
+// 	}
 
-	return MRT(strings.Split(semver.Canonical(highest[len(highest)-1]), "-")[0])
-}
+// 	return MRT(strings.Split(semver.Canonical(highest[len(highest)-1]), "-")[0])
+// }
 
 func MostRecentLiveTag(e Execution) MRLT {
 	reg := regexp.MustCompile(`^v\d+\.\d+\.\d+(|-\S+\+\d+)$`)

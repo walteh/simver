@@ -9,8 +9,8 @@ type GitProvider interface {
 }
 
 type TagProvider interface {
-	FetchTags(ctx context.Context) ([]TagInfo, error)
-	CreateTag(ctx context.Context, tag TagInfo) error
-	TagsFromCommit(ctx context.Context, commitHash string) ([]TagInfo, error)
-	TagsFromBranch(ctx context.Context, branch string) ([]TagInfo, error)
+	FetchTags(ctx context.Context) ([]Tag, error)
+	CreateTag(ctx context.Context, tag Tag) error
+	TagsFromCommit(ctx context.Context, commitHash string) ([]Tag, error)
+	TagsFromBranch(ctx context.Context, branch string) ([]Tag, error)
 }

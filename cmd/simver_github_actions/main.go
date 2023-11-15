@@ -178,7 +178,9 @@ func main() {
 		os.Exit(0)
 	}
 
-	tags := ee.BuildTags(simver.NewTags(ctx, ee))
+	tt := simver.Calculate(ctx, ee).CalculateNewTagsRaw()
+
+	tags := ee.BuildTags(tt)
 
 	reservedTag, reserved := tags.GetReserved()
 
@@ -206,7 +208,8 @@ func main() {
 			}
 			ee = eez
 			prd = prz
-			tags := ee.BuildTags(simver.NewTags(ctx, ee))
+			tt := simver.Calculate(ctx, ee).CalculateNewTagsRaw()
+			tags = ee.BuildTags(tt)
 			reservedTag, reserved = tags.GetReserved()
 		} else {
 			reserved = false

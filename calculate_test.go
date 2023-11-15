@@ -112,13 +112,13 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			expectedBaseTags:  []string{},
 			expectedHeadTags:  []string{},
 			expectedRootTags:  []string{},
-			expectedMergeTags: []string{"v1.2.4-merge"},
+			expectedMergeTags: []string{"v1.2.4"},
 		},
 		// Add more test cases here...
 	}
 
 	for _, tc := range testCases {
-		for _, i := range []string{"base", "head", "root"} {
+		for _, i := range []string{"base", "head", "root", "merge"} {
 			t.Run(tc.name+"_"+i, func(t *testing.T) {
 				out := tc.calculation.CalculateNewTagsRaw()
 
@@ -131,6 +131,9 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				} else if i == "root" {
 					require.NotContains(t, out.RootTags, "", "Root tags contain empty string")
 					require.ElementsMatch(t, tc.expectedRootTags, out.RootTags, "Root tags do not match")
+				} else if i == "merge" {
+					require.NotContains(t, out.MergeTags, "", "Merge tags contain empty string")
+					require.ElementsMatch(t, tc.expectedMergeTags, out.MergeTags, "Merge tags do not match")
 				} else {
 					require.Fail(t, "invalid test case")
 				}

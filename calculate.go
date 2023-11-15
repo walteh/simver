@@ -38,16 +38,16 @@ type ApplyRefsOpts struct {
 func (out *CalculationOutput) ApplyRefs(opts *ApplyRefsOpts) Tags {
 	tags := make(Tags, 0)
 	for _, tag := range out.BaseTags {
-		tags = append(tags, TagInfo{Name: tag, Ref: opts.BaseRef})
+		tags = append(tags, Tag{Name: tag, Ref: opts.BaseRef})
 	}
 	for _, tag := range out.HeadTags {
-		tags = append(tags, TagInfo{Name: tag, Ref: opts.HeadRef})
+		tags = append(tags, Tag{Name: tag, Ref: opts.HeadRef})
 	}
 	for _, tag := range out.RootTags {
-		tags = append(tags, TagInfo{Name: tag, Ref: opts.RootRef})
+		tags = append(tags, Tag{Name: tag, Ref: opts.RootRef})
 	}
 	for _, tag := range out.MergeTags {
-		tags = append(tags, TagInfo{Name: tag, Ref: opts.MergeRef})
+		tags = append(tags, Tag{Name: tag, Ref: opts.MergeRef})
 	}
 	return tags
 }

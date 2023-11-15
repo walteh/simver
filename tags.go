@@ -6,14 +6,14 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-type TagInfo struct {
+type Tag struct {
 	Name string
 	Ref  string
 }
 
-type Tags []TagInfo
+type Tags []Tag
 
-func (t Tags) GetReserved() (TagInfo, bool) {
+func (t Tags) GetReserved() (Tag, bool) {
 
 	for _, tag := range t {
 		if strings.Contains(tag.Name, "-reserved") {
@@ -21,24 +21,7 @@ func (t Tags) GetReserved() (TagInfo, bool) {
 		}
 	}
 
-	return TagInfo{}, false
-}
-
-// HighestSemverContainingString finds the highest semantic version tag that contains the specified string.
-func (t Tags) HighestSemverMatching(matches []string) (string, error) {
-
-	// matches := t.SemversMatching(func(tag string) bool {
-	// 	for _, m := range matcher {
-	// 		if m.MatchString(tag) {
-	// 			return true
-	// 		}
-	// 	}
-	// 	return false
-	// })
-
-	semver.Sort(matches)
-
-	return matches[len(matches)-1], nil
+	return Tag{}, false
 }
 
 func (t Tags) SemversMatching(matcher func(string) bool) []string {

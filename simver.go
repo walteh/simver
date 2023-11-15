@@ -27,22 +27,6 @@ type rawExecution struct {
 	isMinor        bool
 }
 
-// func (e *rawExecution) BaseCommit() string {
-// 	return e.baseCommit
-// }
-
-// func (e *rawExecution) HeadCommit() string {
-// 	return e.headCommit
-// }
-
-// func (e *rawExecution) BaseCommitTags() Tags {
-// 	return e.baseCommitTags
-// }
-
-// func (e *rawExecution) HeadCommitTags() Tags {
-// 	return e.headCommitTags
-// }
-
 func (e *rawExecution) BaseBranchTags() Tags {
 	return e.baseBranchTags
 }
@@ -55,21 +39,9 @@ func (e *rawExecution) PR() int {
 	return e.pr.Number
 }
 
-// func (e *rawExecution) BaseBranch() string {
-// 	return e.baseBranch
-// }
-
-// func (e *rawExecution) HeadBranch() string {
-// 	return e.headBranch
-// }
-
 func (e *rawExecution) IsMerge() bool {
 	return e.pr.Merged
 }
-
-// func (e *rawExecution) RootCommit() string {
-// 	return e.rootCommit
-// }
 
 func (e *rawExecution) RootBranch() string {
 	return e.rootBranch
@@ -78,10 +50,6 @@ func (e *rawExecution) RootBranch() string {
 func (e *rawExecution) RootBranchTags() Tags {
 	return e.rootBranchTags
 }
-
-// func (e *rawExecution) RootCommitTags() Tags {
-// 	return e.rootCommitTags
-// }
 
 func (e *rawExecution) IsMinor() bool {
 	return e.baseBranch == e.rootBranch
