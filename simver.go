@@ -16,6 +16,7 @@ type rawExecution struct {
 	headCommit     string
 	baseCommit     string
 	rootCommit     string
+	mergeCommit    string
 	rootBranchTags Tags
 	rootCommitTags Tags
 	headCommitTags Tags
@@ -62,7 +63,7 @@ func (e *rawExecution) PR() int {
 // 	return e.headBranch
 // }
 
-func (e *rawExecution) IsMerged() bool {
+func (e *rawExecution) IsMerge() bool {
 	return e.pr.Merged
 }
 

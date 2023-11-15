@@ -14,24 +14,10 @@ import (
 type Execution interface {
 	PR() int
 	IsMinor() bool
-	IsMerged() bool
-	// HeadCommit() string
-	// BaseCommit() string
-
-	// HeadBranch() string
-	// BaseBranch() string
-
-	// HeadCommitTags() Tags
-	// BaseCommitTags() Tags
-
+	IsMerge() bool
 	HeadBranchTags() Tags
 	BaseBranchTags() Tags
-
-	// RootCommit() string
-	// RootBranch() string // always main
 	RootBranchTags() Tags
-	// RootCommitTags() Tags
-
 	BuildTags(tags *CalculationOutput) Tags
 }
 
@@ -41,6 +27,7 @@ func NewCaclulation(ctx context.Context, ex Execution) *Calculation {
 	mrlt := MostRecentLiveTag(ex)
 	mrrt := MostRecentReservedTag(ex)
 	return &Calculation{
+		IsMerge:               ex.IsMerge(),
 		MostRecentLiveTag:     mrlt,
 		MostRecentReservedTag: mrrt,
 		MyMostRecentTag:       MyMostRecentTag(ex),

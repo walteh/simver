@@ -14,6 +14,7 @@ type Calculation struct {
 	MostRecentReservedTag MRRT
 	PR                    int
 	NextValidTag          NVT
+	IsMerge               bool
 }
 
 var (
@@ -21,15 +22,17 @@ var (
 )
 
 type CalculationOutput struct {
-	BaseTags []string
-	HeadTags []string
-	RootTags []string
+	BaseTags  []string
+	HeadTags  []string
+	RootTags  []string
+	MergeTags []string
 }
 
 type ApplyRefsOpts struct {
-	HeadRef string
-	BaseRef string
-	RootRef string
+	HeadRef  string
+	BaseRef  string
+	RootRef  string
+	MergeRef string
 }
 
 func (out *CalculationOutput) ApplyRefs(opts *ApplyRefsOpts) Tags {
@@ -43,14 +46,18 @@ func (out *CalculationOutput) ApplyRefs(opts *ApplyRefsOpts) Tags {
 	for _, tag := range out.RootTags {
 		tags = append(tags, TagInfo{Name: tag, Ref: opts.RootRef})
 	}
+	for _, tag := range out.MergeTags {
+		tags = append(tags, TagInfo{Name: tag, Ref: opts.MergeRef})
+	}
 	return tags
 }
 
 func (me *Calculation) CalculateNewTagsRaw() *CalculationOutput {
 	out := &CalculationOutput{
-		BaseTags: []string{},
-		HeadTags: []string{},
-		RootTags: []string{},
+		BaseTags:  []string{},
+		HeadTags:  []string{},
+		RootTags:  []string{},
+		MergeTags: []string{},
 	}
 
 	nvt := string(me.NextValidTag)
@@ -78,8 +85,12 @@ func (me *Calculation) CalculateNewTagsRaw() *CalculationOutput {
 		out.BaseTags = append(out.BaseTags, nvt+fmt.Sprintf("-pr%d+base", me.PR))
 	}
 
-	// then finally we tag mmrt
-	out.HeadTags = append(out.HeadTags, mmrt+fmt.Sprintf("-pr%d+%d", me.PR, int(me.MyMostRecentBuild)+1))
+	if me.IsMerge {
+		out.MergeTags = append(out.MergeTags, mmrt)
+	} else {
+		next := mmrt + fmt.Sprintf("-pr%d+%d", me.PR, int(me.MyMostRecentBuild)+1)
+		out.HeadTags = append(out.HeadTags, next)
+	}
 
 	return out
 }

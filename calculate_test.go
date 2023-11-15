@@ -9,11 +9,12 @@ import (
 
 func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 	testCases := []struct {
-		name             string
-		calculation      *simver.Calculation
-		expectedBaseTags []string
-		expectedHeadTags []string
-		expectedRootTags []string
+		name              string
+		calculation       *simver.Calculation
+		expectedBaseTags  []string
+		expectedHeadTags  []string
+		expectedRootTags  []string
+		expectedMergeTags []string
 	}{
 		{
 			name: "expired mmrt",
@@ -24,6 +25,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild:     33,
 				PR:                    85,
 				NextValidTag:          "v99.99.99",
+				IsMerge:               false,
 			},
 			expectedBaseTags: []string{
 				"v99.99.99-pr85+base",
@@ -34,6 +36,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			expectedRootTags: []string{
 				"v99.99.99-reserved",
 			},
+			expectedMergeTags: []string{},
 		},
 		{
 			name: "missing all",
@@ -44,6 +47,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild:     1,
 				PR:                    1,
 				NextValidTag:          "v3.3.3",
+				IsMerge:               false,
 			},
 			expectedBaseTags: []string{
 				"v3.3.3-pr1+base",
@@ -54,6 +58,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			expectedRootTags: []string{
 				"v3.3.3-reserved",
 			},
+			expectedMergeTags: []string{},
 		},
 		{
 			name: "valid mmrt",
@@ -64,6 +69,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild:     33,
 				PR:                    1,
 				NextValidTag:          "v1.2.6",
+				IsMerge:               false,
 			},
 			expectedBaseTags: []string{},
 			expectedHeadTags: []string{"v1.2.4-pr1+34"},
@@ -79,6 +85,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild:     33,
 				PR:                    1,
 				NextValidTag:          "v1.2.6",
+				IsMerge:               false,
 			},
 			expectedBaseTags: []string{
 				"v1.2.6-pr1+base",
@@ -89,8 +96,24 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			expectedRootTags: []string{
 				"v1.2.6-reserved",
 			},
+			expectedMergeTags: []string{},
 		},
-
+		{
+			name: "valid mmrt with merge",
+			calculation: &simver.Calculation{
+				MostRecentLiveTag:     "v1.2.3",
+				MostRecentReservedTag: "v1.2.5-reserved",
+				MyMostRecentTag:       "v1.2.4",
+				MyMostRecentBuild:     33,
+				PR:                    1,
+				NextValidTag:          "v1.2.6",
+				IsMerge:               true,
+			},
+			expectedBaseTags:  []string{},
+			expectedHeadTags:  []string{},
+			expectedRootTags:  []string{},
+			expectedMergeTags: []string{"v1.2.4-merge"},
+		},
 		// Add more test cases here...
 	}
 
