@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
+	// exp sort
 	"github.com/rs/zerolog"
 	"golang.org/x/mod/semver"
 )
@@ -148,7 +150,7 @@ func MostRecentReservedTag(e Execution) MRRT {
 }
 
 func MyMostRecentBuildNumber(e Execution) MMRBN {
-	reg := regexp.MustCompile(fmt.Sprintf(`^.*-pr%d+\+\d+$`, e.PR()))
+	reg := regexp.MustCompile(fmt.Sprintf(`^.*-pr%d\+\d+$`, e.PR()))
 	highest := e.HeadBranchTags().SemversMatching(func(s string) bool {
 		return reg.MatchString(s)
 	})
@@ -156,6 +158,14 @@ func MyMostRecentBuildNumber(e Execution) MMRBN {
 	if len(highest) == 0 {
 		return 0
 	}
+
+	slices.SortFunc(highest, func(a, b string) int {
+		// because we know the regex matches, we know the split will be len 2
+		// and the second element will be a valid number
+		ai, _ := strconv.Atoi(strings.Split(a, "+")[1])
+		bi, _ := strconv.Atoi(strings.Split(b, "+")[1])
+		return bi - ai
+	})
 
 	high := highest[0]
 

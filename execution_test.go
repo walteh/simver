@@ -347,6 +347,22 @@ func TestNewTags(t *testing.T) {
 				simver.Tag{Name: "v1.5.11-pr84+base", Ref: base_ref},
 			},
 		},
+		{
+			name:           "extra build tags",
+			baseBranchTags: simver.Tags{simver.Tag{Name: "v1.2.3"}},
+			headBranchTags: simver.Tags{
+				simver.Tag{Name: "v1.2.4-pr2+4"},
+				simver.Tag{Name: "v1.2.4-pr2+5"},
+			},
+			headCommitTags: simver.Tags{},
+			rootBranchTags: simver.Tags{simver.Tag{Name: "v1.2.3-reserved"}},
+			pr:             2,
+			isMerge:        false,
+			isMinor:        false,
+			expectedTags: simver.Tags{
+				simver.Tag{Name: "v1.2.4-pr2+6", Ref: head_ref},
+			},
+		},
 	}
 
 	ctx := context.Background()
