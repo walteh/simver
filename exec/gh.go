@@ -102,6 +102,7 @@ type githubPR struct {
 func (me *githubPR) toPRDetails() *simver.PRDetails {
 	return &simver.PRDetails{
 		Number:               me.Number,
+		RootBranch:           "main",
 		HeadBranch:           me.HeadRefName,
 		BaseBranch:           me.BaseRefName,
 		Merged:               me.State == "MERGED",

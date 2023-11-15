@@ -190,7 +190,6 @@ func main() {
 			if tries > 5 {
 				zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
 				fmt.Println(terrors.FormatErrorCaller(err))
-
 				os.Exit(1)
 			}
 
@@ -213,8 +212,6 @@ func main() {
 			reserved = false
 		}
 	}
-
-	// havMergedTag := false
 
 	for _, tag := range tags {
 		if tag.Name == reservedTag.Name && tag.Ref == reservedTag.Ref {
