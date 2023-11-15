@@ -131,9 +131,9 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				IsMerge:               false,
 				ForcePatch:            true,
 			},
-			expectedBaseTags:  []string{"v1.2.6-pr1+base"},
-			expectedHeadTags:  []string{"v1.2.6-pr1+34"},
-			expectedRootTags:  []string{"v1.2.6-reserved"},
+			expectedBaseTags:  []string{"v1.2.5-pr1+base"},
+			expectedHeadTags:  []string{"v1.2.5-pr1+34"},
+			expectedRootTags:  []string{"v1.2.5-reserved"},
 			expectedMergeTags: []string{},
 		},
 		{
@@ -152,6 +152,29 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			expectedHeadTags:  []string{},
 			expectedRootTags:  []string{},
 			expectedMergeTags: []string{"v1.2.4"},
+		},
+		{
+			name: "expired mmrt",
+			calculation: &simver.Calculation{
+				MostRecentLiveTag:     "v1.10.3",
+				MostRecentReservedTag: "v1.18.3-reserved",
+				MyMostRecentTag:       "v1.9.9",
+				MyMostRecentBuild:     33,
+				PR:                    85,
+				NextValidTag:          "v99.99.99",
+				IsMerge:               false,
+				ForcePatch:            true,
+			},
+			expectedBaseTags: []string{
+				"v1.9.10-pr85+base",
+			},
+			expectedHeadTags: []string{
+				"v1.9.10-pr85+34",
+			},
+			expectedRootTags: []string{
+				"v1.9.10-reserved",
+			},
+			expectedMergeTags: []string{},
 		},
 		// Add more test cases here...
 	}

@@ -81,7 +81,7 @@ func (me *Calculation) CalculateNewTagsRaw() *CalculationOutput {
 
 	// force patch is ignored if this is a merge
 	if me.ForcePatch && !me.IsMerge {
-		mmrt = BumpPatch(mmrt)
+		nvt = BumpPatch(mmrt)
 		validMmrt = false
 	}
 
