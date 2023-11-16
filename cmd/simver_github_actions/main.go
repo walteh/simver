@@ -68,22 +68,19 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 		return pr, nil
 	}
 
+	isPush := os.Getenv("GITHUB_EVENT_NAME") == "push"
+
+	if !isPush {
+		return nil, errors.New("not a PR event and not a push event")
+	}
+
 	// get the parent commit
 	parent, err := p.git.CommitFromRef(ctx, "HEAD^")
 	if err != nil {
 		return nil, Err.Trace(err, "error getting parent commit")
 	}
 
-	return &simver.PRDetails{
-		Number:               0,
-		HeadBranch:           branch,
-		BaseBranch:           branch,
-		Merged:               true,
-		MergeCommit:          sha,
-		HeadCommit:           sha,
-		BaseCommit:           parent,
-		PotentialMergeCommit: "",
-	}, nil
+	return simver.NewPushSimulatedPRDetails(parent, sha, branch), nil
 
 }
 
@@ -148,7 +145,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ee, prd, keepgoing, err := simver.LoadExecution(ctx, tagprov, prr)
+	ee, _, keepgoing, err := simver.LoadExecution(ctx, tagprov, prr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution")
 		fmt.Println(terrors.FormatErrorCaller(err))
@@ -156,16 +153,16 @@ func main() {
 	}
 
 	if !keepgoing {
-		zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting because keepgoing is false")
+		zerolog.Ctx(ctx).Debug().Msg("execution is complete, likely because this is a push to a branch that is not main and not related to a PR")
 		os.Exit(0)
 	}
 
-	isPush := os.Getenv("GITHUB_EVENT_NAME") == "push"
+	// isPush := os.Getenv("GITHUB_EVENT_NAME") == "push"
 
-	if isPush && prd.HeadBranch != "main" {
-		zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting because this is not a direct push to main")
-		os.Exit(0)
-	}
+	// if isPush && prd.HeadBranch != "main" {
+	// 	zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting because this is not a direct push to main")
+	// 	os.Exit(0)
+	// }
 
 	tt := simver.Calculate(ctx, ee).CalculateNewTagsRaw(ctx)
 

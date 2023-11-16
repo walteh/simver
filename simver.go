@@ -87,7 +87,7 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		return nil, nil, false, err
 	}
 
-	if pr.Number == 0 && pr.HeadBranch != "main" {
+	if pr.IsSimulatedPush() && pr.HeadBranch != "main" {
 		return nil, nil, false, nil
 	}
 

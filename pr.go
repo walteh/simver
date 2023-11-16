@@ -17,6 +17,25 @@ type PRDetails struct {
 	RootCommit string
 }
 
+func NewPushSimulatedPRDetails(parentCommit, headCommit, branch string) *PRDetails {
+	return &PRDetails{
+		Number:               0,
+		HeadBranch:           branch,
+		BaseBranch:           branch,
+		RootBranch:           branch,
+		Merged:               true,
+		MergeCommit:          headCommit,
+		HeadCommit:           headCommit,
+		RootCommit:           parentCommit,
+		BaseCommit:           parentCommit,
+		PotentialMergeCommit: "",
+	}
+}
+
+func (dets *PRDetails) IsSimulatedPush() bool {
+	return dets.Number == 0
+}
+
 type PRProvider interface {
 	PRDetailsByPRNumber(ctx context.Context, prNumber int) (*PRDetails, bool, error)
 	PRDetailsByCommit(ctx context.Context, commit string) (*PRDetails, bool, error)
