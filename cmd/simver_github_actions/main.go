@@ -25,19 +25,6 @@ type PullRequestResolver struct {
 }
 
 func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails, error) {
-	// is the an open, closed, or synchronized PR event?
-
-	// event := os.Getenv("GITHUB_EVENT_NAME")
-
-	// if event == "pull_request" {
-	// 	// this is easy, we know that this is a pr event
-	// } else if event == "pull_request_target" {
-	// 	// this is easy, we know that this is a pr event
-	// } else if event == "push" {
-	// 	// this is easy, we know that this is a push event
-	// } else {
-	// 	return nil, errors.New("not a PR event and not a push event")
-	// }
 
 	head_ref := os.Getenv("GITHUB_REF")
 
@@ -168,12 +155,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	if !keepgoing {
+		zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting because keepgoing is false")
+		os.Exit(0)
+	}
+
 	isPush := os.Getenv("GITHUB_EVENT_NAME") == "push"
 
-	isMain := prd.HeadBranch == "main"
-
-	if !keepgoing || (isPush && !isMain) {
-		zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting")
+	if isPush && prd.HeadBranch != "main" {
+		zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting because this is not a direct push to main")
 		os.Exit(0)
 	}
 
@@ -181,52 +171,7 @@ func main() {
 
 	tags := tt.ApplyRefs(ee.ProvideRefs())
 
-	// reservedTag, reserved := tags.GetReserved()
-
-	// tries := 0
-
-	// for reserved {
-	// 	err := tagprov.CreateTag(ctx, reservedTag)
-	// 	if err != nil {
-	// 		tries++
-	// 		if tries > 5 {
-	// 			zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
-	// 			fmt.Println(terrors.FormatErrorCaller(err))
-	// 			os.Exit(1)
-	// 		}
-
-	// 		time.Sleep(1 * time.Second)
-	// 		eez, prz, keepgoing, err := simver.LoadExecution(ctx, tagprov, prr)
-	// 		if err != nil {
-	// 			zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
-	// 			fmt.Println(terrors.FormatErrorCaller(err))
-	// 			os.Exit(1)
-	// 		}
-	// 		if !keepgoing {
-	// 			zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting")
-	// 			os.Exit(0)
-	// 		}
-	// 		ee = eez
-	// 		prd = prz
-	// 		tags := simver.Calculate(ctx, ee).CalculateNewTagsRaw(ctx).ApplyRefs(ee.ProvideRefs())
-	// 		reservedTag, reserved = tags.GetReserved()
-	// 	} else {
-	// 		reserved = false
-	// 	}
-	// }
-
 	for _, tag := range tags {
-		// if tag.Name == reservedTag.Name && tag.Ref == reservedTag.Ref {
-		// 	continue
-		// }
-
-		// if prd.Merged {
-		// 	if havMergedTag {
-		// 		continue
-		// 	}
-		// 	havMergedTag = true
-		// 	tag.Name = strings.Split(tag.Name, "-")[0]
-		// }
 
 		err := tagprov.CreateTag(ctx, tag)
 		if err != nil {
