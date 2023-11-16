@@ -33,14 +33,18 @@ func Calculate(ctx context.Context, ex Execution) *Calculation {
 
 	mmrt := MyMostRecentTag(ex)
 
+	maxlr := MaxLiveOrReservedTag(mrlt, mrrt)
+
+	maxmr := MaxMyOrReservedTag(mrrt, mmrt)
+
 	return &Calculation{
 		IsMerge:           ex.IsMerge(),
 		MostRecentLiveTag: mrlt,
-		ForcePatch:        ForcePatch(ctx, ex, mmrt),
+		ForcePatch:        ForcePatch(ctx, ex, maxmr),
 		MyMostRecentTag:   mmrt,
 		MyMostRecentBuild: MyMostRecentBuildNumber(ex),
 		PR:                ex.PR(),
-		NextValidTag:      GetNextValidTag(ctx, ex.IsMinor(), mrlt, mrrt),
+		NextValidTag:      GetNextValidTag(ctx, ex.IsMinor(), maxlr),
 	}
 }
 
@@ -50,6 +54,18 @@ type NVT string  // next valid tag
 type MMRT string // my most recent tag
 type MMRBN int   // my most recent build number
 type MRT string  // my reserved tag
+
+type MAXLR string // max live or reserved tag
+
+type MAXMR string // max my reserved tag
+
+func MaxLiveOrReservedTag(mrlt MRLT, mrrt MRRT) MAXLR {
+	return MAXLR(Max(mrlt, mrrt))
+}
+
+func MaxMyOrReservedTag(mrrt MRRT, mmrt MMRT) MAXMR {
+	return MAXMR(Max(mrrt, mmrt))
+}
 
 func BumpPatch[S ~string](arg S) S {
 
@@ -73,7 +89,7 @@ func BumpPatch[S ~string](arg S) S {
 
 }
 
-func ForcePatch(ctx context.Context, ee Execution, mmrt MMRT) bool {
+func ForcePatch(ctx context.Context, ee Execution, mmrt MAXMR) bool {
 	// if our head branch has a
 	reg := regexp.MustCompile(fmt.Sprintf(`^%s$`, mmrt))
 
@@ -173,25 +189,59 @@ func MyMostRecentBuildNumber(e Execution) MMRBN {
 	return MMRBN(n)
 }
 
-func GetNextValidTag(ctx context.Context, minor bool, mrlt MRLT, mrrt MRRT) NVT {
+// func MaxLiveOrReservedTag(mrlt MRLT, mrrt MRRT) MAXLR {
+// 	var max string
 
+// 	if mrlt == "" || mrrt == "" {
+// 		if mrlt != "" {
+// 			max = string(mrlt)
+// 		} else if mrrt != "" {
+// 			max = string(mrrt)
+// 		} else {
+// 			max = baseTag
+// 		}
+// 	} else {
+// 		// only compare if both exist
+// 		if semver.Compare(string(mrrt), string(mrlt)) > 0 {
+// 			max = string(mrrt)
+// 		} else {
+// 			max = string(mrlt)
+// 		}
+// 	}
+
+// 	return MAXLR(max)
+// }
+
+func Max[A ~string, B ~string](a A, b B) string {
 	var max string
 
-	if mrlt == "" || mrrt == "" {
-		if mrlt != "" {
-			max = string(mrlt)
-		} else if mrrt != "" {
-			max = string(mrrt)
+	if a == "" || b == "" {
+		if a != "" {
+			max = string(a)
+		} else if b != "" {
+			max = string(b)
 		} else {
 			max = baseTag
 		}
 	} else {
 		// only compare if both exist
-		if semver.Compare(string(mrrt), string(mrlt)) > 0 {
-			max = string(mrrt)
+		if semver.Compare(string(b), string(a)) > 0 {
+			max = string(b)
 		} else {
-			max = string(mrlt)
+			max = string(a)
 		}
+	}
+
+	return max
+}
+
+func GetNextValidTag(ctx context.Context, minor bool, maxt MAXLR) NVT {
+
+	var max string
+	if maxt == "" {
+		max = baseTag
+	} else {
+		max = string(maxt)
 	}
 
 	maj := semver.Major(max) + "."
@@ -225,8 +275,6 @@ func GetNextValidTag(ctx context.Context, minor bool, mrlt MRLT, mrrt MRRT) NVT 
 		Str("majmin", majmin).
 		Str("patch", patch).
 		Str("min", min).
-		Str("mrlt", string(mrlt)).
-		Str("mrrt", string(mrrt)).
 		Int("minornum", minornum).
 		Int("patchnum", patchnum).
 		Msg("calculated next valid tag")

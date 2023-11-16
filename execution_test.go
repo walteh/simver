@@ -122,53 +122,103 @@ func TestMrrt(t *testing.T) {
 	}
 }
 
+func TestMax(t *testing.T) {
+	testCases := []struct {
+		name     string
+		a        string
+		b        string
+		expected string
+	}{
+		{
+			name:     "normal",
+			a:        "v1.2.3",
+			b:        "v1.2.4-reserved",
+			expected: "v1.2.4-reserved",
+		},
+
+		{
+			name:     "no a",
+			a:        "",
+			b:        "v1.2.4-reserved",
+			expected: "v1.2.4-reserved",
+		},
+		{
+			name:     "no b",
+			a:        "v1.2.3",
+			b:        "",
+			expected: "v1.2.3",
+		},
+		{
+			name:     "no a or b",
+			a:        "",
+			b:        "",
+			expected: "v0.1.0", // base tag is v0.1.0
+		},
+		{
+			name:     "invalid a",
+			a:        "x",
+			b:        "v1.2.4-reserved",
+			expected: "v1.2.4-reserved",
+		},
+		{
+			name:     "invalid b",
+			a:        "v9.8.7-pr33+4444",
+			b:        "x",
+			expected: "v9.8.7-pr33+4444",
+		},
+	}
+
+	// ctx := context.Background()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := simver.Max(tc.a, tc.b)
+			assert.Equal(t, tc.expected, res)
+		})
+	}
+}
+
 func TestNvt(t *testing.T) {
 	testCases := []struct {
 		name        string
-		mrlt        simver.MRLT
-		mrrt        simver.MRRT
+		max         simver.MAXLR
 		minor       bool
 		expectedNvt simver.NVT
 	}{
 		{
 			name:        "normal",
-			mrlt:        "v1.2.3",
-			mrrt:        "v1.2.4-reserved",
+			max:         "v1.2.4-reserved",
 			minor:       false,
 			expectedNvt: "v1.2.5",
 		},
 		{
 			name:        "minor",
-			mrlt:        "v1.2.3",
-			mrrt:        "v1.2.4-reserved",
+			max:         "v1.2.4-reserved",
 			minor:       true,
 			expectedNvt: "v1.3.0",
 		},
 		{
 			name:        "no mrlt",
-			mrlt:        "",
-			mrrt:        "v1.2.4-reserved",
+			max:         "v1.2.4-reserved",
 			minor:       false,
 			expectedNvt: "v1.2.5",
 		},
 		{
 			name:        "no mrrt",
-			mrlt:        "v1.2.3",
-			mrrt:        "",
+			max:         "v1.2.3",
 			minor:       false,
 			expectedNvt: "v1.2.4",
 		},
 		{
-			name:        "no mrlt or mrrt",
-			mrlt:        "",
-			mrrt:        "",
+			name: "no mrlt or mrrt",
+			max:  "",
+
 			minor:       false,
 			expectedNvt: "v0.1.1", // base tag is v0.1.0
 		},
 		{
 			name:        "invalid mrlt",
-			mrlt:        "x",
-			mrrt:        "v1.2.4-reserved",
+			max:         "v1.2.4-reserved",
 			minor:       false,
 			expectedNvt: "v1.2.5",
 		},
@@ -178,7 +228,8 @@ func TestNvt(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := simver.GetNextValidTag(ctx, tc.minor, tc.mrlt, tc.mrrt)
+
+			result := simver.GetNextValidTag(ctx, tc.minor, tc.max)
 			assert.Equal(t, tc.expectedNvt, result)
 		})
 	}
@@ -385,6 +436,30 @@ func TestNewTags(t *testing.T) {
 			pr:             0,
 			isMerge:        false,
 			isMinor:        false,
+			expectedTags: simver.Tags{
+				// if the reserved tag did not exist, we would be using v1.2.4
+				// but since it exists, and pr0 does not know it owns it (via its own v1.2.4-pr0+base tag)
+				// we expect to use the next valid tag, which is v1.2.5
+				simver.Tag{Name: "v1.2.5-pr0+1", Ref: head_ref},
+				simver.Tag{Name: "v1.2.5-reserved", Ref: root_ref},
+				simver.Tag{Name: "v1.2.5-pr0+base", Ref: base_ref},
+			},
+		},
+		{
+			name: "reserved tag already exists",
+			baseBranchTags: simver.Tags{
+				simver.Tag{Name: "v0.17.3-reserved"},
+				simver.Tag{Name: "v0.17.3-pr85+base"},
+				simver.Tag{Name: "v0.17.3-pr85+1"},
+			},
+			headBranchTags: simver.Tags{},
+			headCommitTags: simver.Tags{},
+			rootBranchTags: simver.Tags{
+				simver.Tag{Name: "v0.17.3-reserved"},
+			},
+			pr:      0,
+			isMerge: false,
+			isMinor: false,
 			expectedTags: simver.Tags{
 				// if the reserved tag did not exist, we would be using v1.2.4
 				// but since it exists, and pr0 does not know it owns it (via its own v1.2.4-pr0+base tag)
