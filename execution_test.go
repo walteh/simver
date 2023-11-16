@@ -376,12 +376,33 @@ func TestNewTags(t *testing.T) {
 				simver.Tag{Name: "v1.2.4-pr2+6", Ref: head_ref},
 			},
 		},
+		{
+			name:           "reserved tag already exists",
+			baseBranchTags: simver.Tags{simver.Tag{Name: "v1.2.3"}},
+			headBranchTags: simver.Tags{},
+			headCommitTags: simver.Tags{},
+			rootBranchTags: simver.Tags{simver.Tag{Name: "v1.2.4-reserved"}},
+			pr:             0,
+			isMerge:        false,
+			isMinor:        false,
+			expectedTags: simver.Tags{
+				// if the reserved tag did not exist, we would be using v1.2.4
+				// but since it exists, and pr0 does not know it owns it (via its own v1.2.4-pr0+base tag)
+				// we expect to use the next valid tag, which is v1.2.5
+				simver.Tag{Name: "v1.2.5-pr0+1", Ref: head_ref},
+				simver.Tag{Name: "v1.2.5-reserved", Ref: root_ref},
+				simver.Tag{Name: "v1.2.5-pr0+base", Ref: base_ref},
+			},
+		},
 	}
 
 	ctx := context.Background()
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+
+			// ctx = zerolog.New(zerolog.NewTestWriter(t)).With().Logger().WithContext(ctx)
+
 			mockExec := new(mockery.MockExecution_simver)
 			mockExec.EXPECT().HeadBranchTags().Return(tc.headBranchTags)
 			mockExec.EXPECT().HeadCommitTags().Return(tc.headCommitTags)
@@ -391,14 +412,14 @@ func TestNewTags(t *testing.T) {
 			mockExec.EXPECT().IsMerge().Return(tc.isMerge)
 			mockExec.EXPECT().RootBranchTags().Return(tc.rootBranchTags)
 
-			result := simver.Calculate(ctx, mockExec).CalculateNewTagsRaw(ctx)
-
-			got := result.ApplyRefs(&simver.ApplyRefsOpts{
-				HeadRef:  head_ref,
-				BaseRef:  base_ref,
-				RootRef:  root_ref,
-				MergeRef: merge_ref,
-			})
+			got := simver.Calculate(ctx, mockExec).
+				CalculateNewTagsRaw(ctx).
+				ApplyRefs(&simver.BasicRefProvider{
+					HeadRef:  head_ref,
+					BaseRef:  base_ref,
+					RootRef:  root_ref,
+					MergeRef: merge_ref,
+				})
 
 			assert.ElementsMatch(t, tc.expectedTags, got)
 		})

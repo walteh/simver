@@ -7,6 +7,7 @@ import (
 )
 
 var _ Execution = &rawExecution{}
+var _ RefProvider = &rawExecution{}
 
 type rawExecution struct {
 	pr             *PRDetails
@@ -25,6 +26,26 @@ type rawExecution struct {
 	headBranchTags Tags
 	isMerged       bool
 	isMinor        bool
+}
+
+func (e *rawExecution) Head() string {
+	return e.headCommit
+}
+
+func (e *rawExecution) Base() string {
+	return e.baseCommit
+}
+
+func (e *rawExecution) Root() string {
+	return e.rootCommit
+}
+
+func (e *rawExecution) Merge() string {
+	return e.mergeCommit
+}
+
+func (e *rawExecution) ProvideRefs() RefProvider {
+	return e
 }
 
 func (e *rawExecution) BaseBranchTags() Tags {
@@ -57,15 +78,6 @@ func (e *rawExecution) IsMinor() bool {
 
 func (e *rawExecution) HeadCommitTags() Tags {
 	return e.headCommitTags
-}
-
-func (e *rawExecution) BuildTags(tags *CalculationOutput) Tags {
-	return tags.ApplyRefs(&ApplyRefsOpts{
-		HeadRef:  e.headCommit,
-		BaseRef:  e.baseCommit,
-		RootRef:  e.rootCommit,
-		MergeRef: e.mergeCommit,
-	})
 }
 
 func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Execution, *PRDetails, bool, error) {

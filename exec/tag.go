@@ -15,7 +15,7 @@ var (
 	_ simver.TagProvider = (*gitProvider)(nil)
 )
 
-func (p *gitProvider) TagsFromCommit(ctx context.Context, commitHash string) ([]simver.Tag, error) {
+func (p *gitProvider) TagsFromCommit(ctx context.Context, commitHash string) (simver.Tags, error) {
 
 	ctx = zerolog.Ctx(ctx).With().Str("commit", commitHash).Logger().WithContext(ctx)
 
@@ -28,7 +28,7 @@ func (p *gitProvider) TagsFromCommit(ctx context.Context, commitHash string) ([]
 	}
 
 	lines := strings.Split(string(out), "\n")
-	var tags []simver.Tag
+	var tags simver.Tags
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
@@ -42,7 +42,7 @@ func (p *gitProvider) TagsFromCommit(ctx context.Context, commitHash string) ([]
 	return tags, nil
 }
 
-func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simver.Tag, error) {
+func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) (simver.Tags, error) {
 
 	start := time.Now()
 
@@ -56,7 +56,7 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simv
 
 	lines := strings.Split(string(out), "\n")
 
-	var tags []simver.Tag
+	var tags simver.Tags
 	for _, line := range lines {
 
 		if line == "" {
@@ -95,13 +95,15 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simv
 		tags = append(tags, simver.Tag{Name: name, Ref: dat.Ref})
 	}
 
+	tags = tags.ExtractCommitRefs()
+
 	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tags)).Any("tags", tags).Dur("dur", time.Since(start)).Msg("got tags from branch")
 
 	return tags, nil
 
 }
 
-func (p *gitProvider) FetchTags(ctx context.Context) ([]simver.Tag, error) {
+func (p *gitProvider) FetchTags(ctx context.Context) (simver.Tags, error) {
 
 	start := time.Now()
 
@@ -125,7 +127,7 @@ func (p *gitProvider) FetchTags(ctx context.Context) ([]simver.Tag, error) {
 	}
 
 	lines := strings.Split(string(out), "\n")
-	var tagInfos []simver.Tag
+	var tagInfos simver.Tags
 	for _, line := range lines {
 		parts := strings.Split(line, " ")
 		if len(parts) != 2 {
@@ -139,6 +141,8 @@ func (p *gitProvider) FetchTags(ctx context.Context) ([]simver.Tag, error) {
 		}
 		tagInfos = append(tagInfos, simver.Tag{Name: name, Ref: ref})
 	}
+
+	tagInfos = tagInfos.ExtractCommitRefs()
 
 	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tagInfos)).Dur("duration", time.Since(start)).Any("tags", tagInfos).Msg("tags fetched")
 

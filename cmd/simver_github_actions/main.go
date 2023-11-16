@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
@@ -180,46 +179,46 @@ func main() {
 
 	tt := simver.Calculate(ctx, ee).CalculateNewTagsRaw(ctx)
 
-	tags := ee.BuildTags(tt)
+	tags := tt.ApplyRefs(ee.ProvideRefs())
 
-	reservedTag, reserved := tags.GetReserved()
+	// reservedTag, reserved := tags.GetReserved()
 
-	tries := 0
+	// tries := 0
 
-	for reserved {
-		err := tagprov.CreateTag(ctx, reservedTag)
-		if err != nil {
-			if tries > 5 {
-				zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
-				fmt.Println(terrors.FormatErrorCaller(err))
-				os.Exit(1)
-			}
+	// for reserved {
+	// 	err := tagprov.CreateTag(ctx, reservedTag)
+	// 	if err != nil {
+	// 		tries++
+	// 		if tries > 5 {
+	// 			zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
+	// 			fmt.Println(terrors.FormatErrorCaller(err))
+	// 			os.Exit(1)
+	// 		}
 
-			time.Sleep(1 * time.Second)
-			eez, prz, keepgoing, err := simver.LoadExecution(ctx, tagprov, prr)
-			if err != nil {
-				zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
-				fmt.Println(terrors.FormatErrorCaller(err))
-				os.Exit(1)
-			}
-			if !keepgoing {
-				zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting")
-				os.Exit(0)
-			}
-			ee = eez
-			prd = prz
-			tt := simver.Calculate(ctx, ee).CalculateNewTagsRaw(ctx)
-			tags = ee.BuildTags(tt)
-			reservedTag, reserved = tags.GetReserved()
-		} else {
-			reserved = false
-		}
-	}
+	// 		time.Sleep(1 * time.Second)
+	// 		eez, prz, keepgoing, err := simver.LoadExecution(ctx, tagprov, prr)
+	// 		if err != nil {
+	// 			zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
+	// 			fmt.Println(terrors.FormatErrorCaller(err))
+	// 			os.Exit(1)
+	// 		}
+	// 		if !keepgoing {
+	// 			zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting")
+	// 			os.Exit(0)
+	// 		}
+	// 		ee = eez
+	// 		prd = prz
+	// 		tags := simver.Calculate(ctx, ee).CalculateNewTagsRaw(ctx).ApplyRefs(ee.ProvideRefs())
+	// 		reservedTag, reserved = tags.GetReserved()
+	// 	} else {
+	// 		reserved = false
+	// 	}
+	// }
 
 	for _, tag := range tags {
-		if tag.Name == reservedTag.Name && tag.Ref == reservedTag.Ref {
-			continue
-		}
+		// if tag.Name == reservedTag.Name && tag.Ref == reservedTag.Ref {
+		// 	continue
+		// }
 
 		// if prd.Merged {
 		// 	if havMergedTag {

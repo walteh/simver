@@ -24,6 +24,16 @@ func (t Tags) GetReserved() (Tag, bool) {
 	return Tag{}, false
 }
 
+func (t Tags) Names() []string {
+	var names []string
+
+	for _, tag := range t {
+		names = append(names, tag.Name)
+	}
+
+	return names
+}
+
 func (t Tags) SemversMatching(matcher func(string) bool) []string {
 	var versions []string
 
@@ -40,4 +50,26 @@ func (t Tags) SemversMatching(matcher func(string) bool) []string {
 	semver.Sort(versions)
 
 	return versions
+}
+
+func (t Tags) ExtractCommitRefs() Tags {
+	var tags Tags
+
+	for _, tag := range t {
+		if len(tag.Ref) == 40 {
+			tags = append(tags, tag)
+		}
+	}
+
+	return tags
+}
+
+func (t Tags) MappedByName() map[string]string {
+	m := make(map[string]string)
+
+	for _, tag := range t {
+		m[tag.Name] = tag.Ref
+	}
+
+	return m
 }

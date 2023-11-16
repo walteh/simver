@@ -21,7 +21,7 @@ type Execution interface {
 	HeadBranchTags() Tags
 	BaseBranchTags() Tags
 	RootBranchTags() Tags
-	BuildTags(tags *CalculationOutput) Tags
+	ProvideRefs() RefProvider
 }
 
 const baseTag = "v0.1.0"
@@ -33,25 +33,16 @@ func Calculate(ctx context.Context, ex Execution) *Calculation {
 
 	mmrt := MyMostRecentTag(ex)
 
-	// // if mmrt already exists on head
-
-	// if ForcePatch(ctx, ex, mmrt) {
-	// 	mmrt = BumpPatch(mmrt)
-	// }
-
 	return &Calculation{
-		IsMerge:               ex.IsMerge(),
-		MostRecentLiveTag:     mrlt,
-		MostRecentReservedTag: mrrt,
-		ForcePatch:            ForcePatch(ctx, ex, mmrt),
-		MyMostRecentTag:       mmrt,
-		MyMostRecentBuild:     MyMostRecentBuildNumber(ex),
-		PR:                    ex.PR(),
-		NextValidTag:          GetNextValidTag(ctx, ex.IsMinor(), mrlt, mrrt),
+		IsMerge:           ex.IsMerge(),
+		MostRecentLiveTag: mrlt,
+		ForcePatch:        ForcePatch(ctx, ex, mmrt),
+		MyMostRecentTag:   mmrt,
+		MyMostRecentBuild: MyMostRecentBuildNumber(ex),
+		PR:                ex.PR(),
+		NextValidTag:      GetNextValidTag(ctx, ex.IsMinor(), mrlt, mrrt),
 	}
 }
-
-// type TagString string
 
 type MRLT string // most recent live tag
 type MRRT string // most recent reserved tag

@@ -43,6 +43,7 @@ two bugs:
 1. make sure that a new pr to main does a minor bump
 2. make sure that a new pr not to main does a patch bump
 3. make sure that a new commit to a pr who has been tagged with a version and was last used for it does a patch bump
+1. make sure if reserved is set, but others are not that it does not loop infinitely
 
 
 # process

@@ -10,14 +10,13 @@ import (
 )
 
 type Calculation struct {
-	MyMostRecentTag       MMRT
-	MostRecentLiveTag     MRLT
-	MyMostRecentBuild     MMRBN
-	MostRecentReservedTag MRRT
-	PR                    int
-	NextValidTag          NVT
-	IsMerge               bool
-	ForcePatch            bool
+	MyMostRecentTag   MMRT
+	MostRecentLiveTag MRLT
+	MyMostRecentBuild MMRBN
+	PR                int
+	NextValidTag      NVT
+	IsMerge           bool
+	ForcePatch        bool
 }
 
 var (
@@ -31,26 +30,20 @@ type CalculationOutput struct {
 	MergeTags []string
 }
 
-type ApplyRefsOpts struct {
-	HeadRef  string
-	BaseRef  string
-	RootRef  string
-	MergeRef string
-}
-
-func (out *CalculationOutput) ApplyRefs(opts *ApplyRefsOpts) Tags {
+func (out *CalculationOutput) ApplyRefs(opts RefProvider) Tags {
 	tags := make(Tags, 0)
 	for _, tag := range out.BaseTags {
-		tags = append(tags, Tag{Name: tag, Ref: opts.BaseRef})
+		tags = append(tags, Tag{Name: tag, Ref: opts.Base()})
 	}
+
 	for _, tag := range out.HeadTags {
-		tags = append(tags, Tag{Name: tag, Ref: opts.HeadRef})
+		tags = append(tags, Tag{Name: tag, Ref: opts.Head()})
 	}
 	for _, tag := range out.RootTags {
-		tags = append(tags, Tag{Name: tag, Ref: opts.RootRef})
+		tags = append(tags, Tag{Name: tag, Ref: opts.Root()})
 	}
 	for _, tag := range out.MergeTags {
-		tags = append(tags, Tag{Name: tag, Ref: opts.MergeRef})
+		tags = append(tags, Tag{Name: tag, Ref: opts.Merge()})
 	}
 	return tags
 }
