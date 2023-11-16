@@ -1,8 +1,10 @@
 package simver
 
 import (
+	"slices"
 	"strings"
 
+	"github.com/rs/zerolog"
 	"golang.org/x/mod/semver"
 )
 
@@ -11,7 +13,38 @@ type Tag struct {
 	Ref  string
 }
 
+var _ zerolog.LogArrayMarshaler = (*Tags)(nil)
+
 type Tags []Tag
+
+func shortRef(ref string) string {
+	if len(ref) <= 11 {
+		return ref
+	}
+
+	return ref[:4] + "..." + ref[len(ref)-4:]
+}
+
+func (t Tags) Sort() Tags {
+	tags := make(Tags, len(t))
+	copy(tags, t)
+
+	slices.SortFunc(tags, func(a, b Tag) int {
+		return semver.Compare(a.Name, b.Name)
+	})
+
+	return tags
+}
+
+// MarshalZerologArray implements zerolog.LogArrayMarshaler.
+func (t Tags) MarshalZerologArray(a *zerolog.Array) {
+
+	tr := t.Sort()
+
+	for _, tag := range tr {
+		a.Str(shortRef(tag.Ref) + " => " + tag.Name)
+	}
+}
 
 func (t Tags) GetReserved() (Tag, bool) {
 

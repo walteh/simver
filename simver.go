@@ -137,12 +137,12 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 	}
 
 	zerolog.Ctx(ctx).Debug().
-		Any("baseCommitTags", baseCommitTags).
-		Any("baseBranchTags", baseBranchTags).
-		Any("rootCommitTags", rootCommitTags).
-		Any("rootBranchTags", rootBranchTags).
-		Any("headTags", headTags).
-		Any("headBranchTags", headBranchTags).
+		Array("baseCommitTags", baseCommitTags).
+		Array("baseBranchTags", baseBranchTags).
+		Array("rootCommitTags", rootCommitTags).
+		Array("rootBranchTags", rootBranchTags).
+		Array("headTags", headTags).
+		Array("headBranchTags", headBranchTags).
 		Any("pr", pr).
 		Msg("loaded tags")
 
