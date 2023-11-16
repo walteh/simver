@@ -1,8 +1,10 @@
 package simver
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/walteh/terrors"
 	"golang.org/x/mod/semver"
 )
@@ -53,7 +55,7 @@ func (out *CalculationOutput) ApplyRefs(opts *ApplyRefsOpts) Tags {
 	return tags
 }
 
-func (me *Calculation) CalculateNewTagsRaw() *CalculationOutput {
+func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutput {
 	out := &CalculationOutput{
 		BaseTags:  []string{},
 		HeadTags:  []string{},
@@ -98,6 +100,17 @@ func (me *Calculation) CalculateNewTagsRaw() *CalculationOutput {
 		next := mmrt + fmt.Sprintf("-pr%d+%d", me.PR, int(me.MyMostRecentBuild)+1)
 		out.HeadTags = append(out.HeadTags, next)
 	}
+
+	zerolog.Ctx(ctx).Debug().
+		Any("calculation", me).
+		Any("output", out).
+		Str("mmrt", mmrt).
+		Str("mrlt", mrlt).
+		Str("nvt", nvt).
+		Str("pr", fmt.Sprintf("%d", me.PR)).
+		Bool("isMerge", me.IsMerge).
+		Bool("forcePatch", me.ForcePatch).
+		Msg("CalculateNewTagsRaw")
 
 	return out
 }

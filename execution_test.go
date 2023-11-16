@@ -391,7 +391,7 @@ func TestNewTags(t *testing.T) {
 			mockExec.EXPECT().IsMerge().Return(tc.isMerge)
 			mockExec.EXPECT().RootBranchTags().Return(tc.rootBranchTags)
 
-			result := simver.Calculate(ctx, mockExec).CalculateNewTagsRaw()
+			result := simver.Calculate(ctx, mockExec).CalculateNewTagsRaw(ctx)
 
 			got := result.ApplyRefs(&simver.ApplyRefsOpts{
 				HeadRef:  head_ref,

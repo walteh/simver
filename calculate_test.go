@@ -1,6 +1,7 @@
 package simver_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -179,10 +180,12 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 		// Add more test cases here...
 	}
 
+	ctx := context.Background()
+
 	for _, tc := range testCases {
 		for _, i := range []string{"base", "head", "root", "merge"} {
 			t.Run(tc.name+"_"+i, func(t *testing.T) {
-				out := tc.calculation.CalculateNewTagsRaw()
+				out := tc.calculation.CalculateNewTagsRaw(ctx)
 
 				if i == "base" {
 					require.NotContains(t, out.BaseTags, "", "Base tags contain empty string")
