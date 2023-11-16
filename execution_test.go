@@ -264,9 +264,9 @@ func TestNewTags(t *testing.T) {
 			isMerge:        false,
 			isMinor:        false,
 			expectedTags: simver.Tags{
-				simver.Tag{Name: "v1.2.4-pr0+1", Ref: head_ref},
-				simver.Tag{Name: "v1.2.4-reserved", Ref: root_ref},
-				simver.Tag{Name: "v1.2.4-pr0+base", Ref: base_ref},
+				simver.Tag{Name: "v1.2.4", Ref: head_ref},
+				// simver.Tag{Name: "v1.2.4-reserved", Ref: root_ref},
+				// simver.Tag{Name: "v1.2.4-pr0+base", Ref: base_ref},
 			},
 		},
 		{
@@ -275,13 +275,13 @@ func TestNewTags(t *testing.T) {
 			headBranchTags: simver.Tags{},
 			headCommitTags: simver.Tags{},
 			rootBranchTags: simver.Tags{},
-			pr:             99,
-			isMerge:        false,
+			pr:             0,
+			isMerge:        true,
 			isMinor:        true,
 			expectedTags: simver.Tags{
-				simver.Tag{Name: "v1.3.0-pr99+1", Ref: head_ref},
-				simver.Tag{Name: "v1.3.0-reserved", Ref: root_ref},
-				simver.Tag{Name: "v1.3.0-pr99+base", Ref: base_ref},
+				simver.Tag{Name: "v1.3.0", Ref: merge_ref},
+				// simver.Tag{Name: "v1.3.0-reserved", Ref: root_ref},
+				// simver.Tag{Name: "v1.3.0-pr99+base", Ref: base_ref},
 			},
 		},
 		{
@@ -329,17 +329,17 @@ func TestNewTags(t *testing.T) {
 			headBranchTags: simver.Tags{},
 			headCommitTags: simver.Tags{},
 			rootBranchTags: simver.Tags{},
-			pr:             0,
+			pr:             1,
 			isMerge:        false,
 			isMinor:        true,
 			expectedTags: simver.Tags{
 				// we also need to reserve the next version tag
 				// which should be v0.2.0 since the base branch is main
 				simver.Tag{Name: "v0.2.0-reserved", Ref: root_ref},
-				simver.Tag{Name: "v0.2.0-pr0+base", Ref: base_ref},
+				simver.Tag{Name: "v0.2.0-pr1+base", Ref: base_ref},
 				// and finally, we need to tag the commit with the PR number
 				// since the base branch is main, we set it to v0.2.0-pr0
-				simver.Tag{Name: "v0.2.0-pr0+1", Ref: head_ref},
+				simver.Tag{Name: "v0.2.0-pr1+1", Ref: head_ref},
 			},
 		},
 		{
@@ -433,16 +433,16 @@ func TestNewTags(t *testing.T) {
 			headBranchTags: simver.Tags{},
 			headCommitTags: simver.Tags{},
 			rootBranchTags: simver.Tags{simver.Tag{Name: "v1.2.4-reserved"}},
-			pr:             0,
+			pr:             3,
 			isMerge:        false,
 			isMinor:        false,
 			expectedTags: simver.Tags{
 				// if the reserved tag did not exist, we would be using v1.2.4
 				// but since it exists, and pr0 does not know it owns it (via its own v1.2.4-pr0+base tag)
 				// we expect to use the next valid tag, which is v1.2.5
-				simver.Tag{Name: "v1.2.5-pr0+1", Ref: head_ref},
+				simver.Tag{Name: "v1.2.5-pr3+1", Ref: head_ref},
 				simver.Tag{Name: "v1.2.5-reserved", Ref: root_ref},
-				simver.Tag{Name: "v1.2.5-pr0+base", Ref: base_ref},
+				simver.Tag{Name: "v1.2.5-pr3+base", Ref: base_ref},
 			},
 		},
 		{
@@ -457,16 +457,16 @@ func TestNewTags(t *testing.T) {
 			rootBranchTags: simver.Tags{
 				simver.Tag{Name: "v0.17.3-reserved"},
 			},
-			pr:      0,
+			pr:      99,
 			isMerge: false,
 			isMinor: false,
 			expectedTags: simver.Tags{
 				// if the reserved tag did not exist, we would be using v1.2.4
-				// but since it exists, and pr0 does not know it owns it (via its own v1.2.4-pr0+base tag)
+				// but since it exists, and pr99 does not know it owns it (via its own v1.2.4-pr99+base tag)
 				// we expect to use the next valid tag, which is v1.2.5
-				simver.Tag{Name: "v1.2.5-pr0+1", Ref: head_ref},
-				simver.Tag{Name: "v1.2.5-reserved", Ref: root_ref},
-				simver.Tag{Name: "v1.2.5-pr0+base", Ref: base_ref},
+				simver.Tag{Name: "v0.17.4-pr99+1", Ref: head_ref},
+				simver.Tag{Name: "v0.17.4-reserved", Ref: root_ref},
+				simver.Tag{Name: "v0.17.4-pr99+base", Ref: base_ref},
 			},
 		},
 	}

@@ -83,15 +83,21 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 	// if mmrt is invalid, then we need to reserve a new mmrt (which is the same as nvt)
 	if !validMmrt {
 		mmrt = nvt
-		out.RootTags = append(out.RootTags, nvt+"-reserved")
-		out.BaseTags = append(out.BaseTags, nvt+fmt.Sprintf("-pr%d+base", me.PR))
+		// pr will be 0 if this is not a and is a push to the root branch
+		if me.PR != 0 {
+			out.RootTags = append(out.RootTags, nvt+"-reserved")
+			out.BaseTags = append(out.BaseTags, nvt+fmt.Sprintf("-pr%d+base", me.PR))
+		}
 	}
 
 	if me.IsMerge {
 		out.MergeTags = append(out.MergeTags, mmrt)
 	} else {
-		next := mmrt + fmt.Sprintf("-pr%d+%d", me.PR, int(me.MyMostRecentBuild)+1)
-		out.HeadTags = append(out.HeadTags, next)
+		if me.PR == 0 {
+			out.HeadTags = append(out.HeadTags, mmrt)
+		} else {
+			out.HeadTags = append(out.HeadTags, mmrt+fmt.Sprintf("-pr%d+%d", me.PR, int(me.MyMostRecentBuild)+1))
+		}
 	}
 
 	zerolog.Ctx(ctx).Debug().

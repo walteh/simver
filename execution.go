@@ -189,29 +189,6 @@ func MyMostRecentBuildNumber(e Execution) MMRBN {
 	return MMRBN(n)
 }
 
-// func MaxLiveOrReservedTag(mrlt MRLT, mrrt MRRT) MAXLR {
-// 	var max string
-
-// 	if mrlt == "" || mrrt == "" {
-// 		if mrlt != "" {
-// 			max = string(mrlt)
-// 		} else if mrrt != "" {
-// 			max = string(mrrt)
-// 		} else {
-// 			max = baseTag
-// 		}
-// 	} else {
-// 		// only compare if both exist
-// 		if semver.Compare(string(mrrt), string(mrlt)) > 0 {
-// 			max = string(mrrt)
-// 		} else {
-// 			max = string(mrlt)
-// 		}
-// 	}
-
-// 	return MAXLR(max)
-// }
-
 func Max[A ~string, B ~string](a A, b B) string {
 	var max string
 
