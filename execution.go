@@ -35,12 +35,12 @@ func Calculate(ctx context.Context, ex Execution) *Calculation {
 
 	maxlr := MaxLiveOrReservedTag(mrlt, mrrt)
 
-	maxmr := MaxMyOrReservedTag(mrrt, mmrt)
+	// maxmr := MaxMyOrReservedTag(mrrt, mmrt)
 
 	return &Calculation{
 		IsMerge:           ex.IsMerge(),
 		MostRecentLiveTag: mrlt,
-		ForcePatch:        ForcePatch(ctx, ex, maxmr),
+		ForcePatch:        ForcePatch(ctx, ex, mmrt),
 		MyMostRecentTag:   mmrt,
 		MyMostRecentBuild: MyMostRecentBuildNumber(ex),
 		PR:                ex.PR(),
@@ -89,7 +89,7 @@ func BumpPatch[S ~string](arg S) S {
 
 }
 
-func ForcePatch(ctx context.Context, ee Execution, mmrt MAXMR) bool {
+func ForcePatch(ctx context.Context, ee Execution, mmrt MMRT) bool {
 	// if our head branch has a
 	reg := regexp.MustCompile(fmt.Sprintf(`^%s$`, mmrt))
 
