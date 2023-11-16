@@ -168,15 +168,12 @@ func main() {
 
 	tags := tt.ApplyRefs(ee.ProvideRefs())
 
-	for _, tag := range tags {
+	err = tagprov.CreateTags(ctx, tags...)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
+		fmt.Println(terrors.FormatErrorCaller(err))
 
-		err := tagprov.CreateTag(ctx, tag)
-		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
-			fmt.Println(terrors.FormatErrorCaller(err))
-
-			os.Exit(1)
-		}
+		os.Exit(1)
 	}
 
 }

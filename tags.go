@@ -1,12 +1,20 @@
 package simver
 
 import (
+	"context"
 	"slices"
 	"strings"
 
 	"github.com/rs/zerolog"
 	"golang.org/x/mod/semver"
 )
+
+type TagProvider interface {
+	FetchTags(ctx context.Context) (Tags, error)
+	CreateTags(ctx context.Context, tag ...Tag) error
+	TagsFromCommit(ctx context.Context, commitHash string) (Tags, error)
+	TagsFromBranch(ctx context.Context, branch string) (Tags, error)
+}
 
 type Tag struct {
 	Name string

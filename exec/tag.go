@@ -151,33 +151,29 @@ func (p *gitProvider) FetchTags(ctx context.Context) (simver.Tags, error) {
 	return tagInfos, nil
 }
 
-func (p *gitProvider) CreateTag(ctx context.Context, tag simver.Tag) error {
-
-	ctx = zerolog.Ctx(ctx).With().Str("name", tag.Name).Str("ref", tag.Ref).Logger().WithContext(ctx)
+func (p *gitProvider) CreateTags(ctx context.Context, tag ...simver.Tag) error {
 
 	if p.ReadOnly {
 		zerolog.Ctx(ctx).Debug().Msg("read only mode, skipping tag creation")
 		return nil
 	}
 
-	zerolog.Ctx(ctx).Debug().Msg("creating tag")
+	for _, t := range tag {
+		cmd := p.git(ctx, "tag", t.Name, t.Ref)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Run()
+		if err != nil {
+			return ErrExecGit.Trace(err, "name="+t.Name, "ref="+t.Ref)
+		}
+	}
 
-	cmd := p.git(ctx, "tag", tag.Name, tag.Ref)
+	cmd := p.git(ctx, "push", "origin", "--tags")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		return ErrExecGit.Trace(err, "name="+tag.Name, "ref="+tag.Ref)
-	}
-
-	zerolog.Ctx(ctx).Debug().Msg("pushing tag")
-
-	cmd = p.git(ctx, "push", "origin", tag.Name)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	if err != nil {
-		return ErrExecGit.Trace(err, "name="+tag.Name, "ref="+tag.Ref)
+		return ErrExecGit.Trace(err)
 	}
 
 	zerolog.Ctx(ctx).Debug().Msg("tag created")
