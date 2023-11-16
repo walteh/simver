@@ -92,12 +92,12 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) (simver
 			continue
 		}
 
-		tags = append(tags, simver.Tag{Name: name, Ref: dat.Ref})
+		tags = append(tags, simver.Tag{Name: name, Ref: dat.Sha})
 	}
 
 	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tags)).Any("tags", tags).Dur("dur", time.Since(start)).Msg("got tags from branch")
 
-	tags = tags.ExtractCommitRefs()
+	// tags = tags.ExtractCommitRefs()
 
 	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tags)).Any("tags", tags).Dur("dur", time.Since(start)).Msg("got tags from branch")
 
@@ -144,7 +144,7 @@ func (p *gitProvider) FetchTags(ctx context.Context) (simver.Tags, error) {
 		tagInfos = append(tagInfos, simver.Tag{Name: name, Ref: ref})
 	}
 
-	tagInfos = tagInfos.ExtractCommitRefs()
+	// tagInfos = tagInfos.ExtractCommitRefs()
 
 	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tagInfos)).Dur("duration", time.Since(start)).Any("tags", tagInfos).Msg("tags fetched")
 
