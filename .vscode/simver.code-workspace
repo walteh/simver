@@ -10,6 +10,7 @@
 							VSCODE
 		////////////////////////////////////////////// */
 		"workbench.tree.indent": 16,
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
 		"editor.formatOnSave": true,
 		"search.useIgnoreFiles": true,
 		"debug.console.wordWrap": false,
@@ -25,17 +26,17 @@
 		/* //////////////////////////////////////////////
 							YAML
 		////////////////////////////////////////////// */
-		"yaml.format.enable": true,
-		"[yaml]": {
-			"editor.defaultFormatter": "redhat.vscode-yaml",
-			"editor.bracketPairColorization.enabled": true,
-			"editor.formatOnSave": true,
-		},
-		"yaml.style.flowSequence": "allow",
-		"yaml.style.flowMapping": "allow",
-		"yaml.format.proseWrap": "preserve",
-		"yaml.format.singleQuote": false,
-		"yaml.extension.recommendations": true,
+		// "yaml.format.enable": true,
+		// "[yaml]": {
+		// 	"editor.defaultFormatter": "esbenp.prettier-vscode",
+		// 	"editor.bracketPairColorization.enabled": true,
+		// 	"editor.formatOnSave": true,
+		// },
+		// "yaml.style.flowSequence": "allow",
+		// "yaml.style.flowMapping": "allow",
+		// "yaml.format.proseWrap": "preserve",
+		// "yaml.format.singleQuote": false,
+		// "yaml.extension.recommendations": true,
 		/* //////////////////////////////////////////////
 							DOCKER
 		////////////////////////////////////////////// */

@@ -4,6 +4,9 @@ simple, pr based, semver git tagging logic
 
 # definitions
 
+        # how can we make sure that a version is reserved - and if it is not reserved we need to bump it
+
+
 ## when is mmrt valid?
 1. it exists
 2. it is higher than the mrlt
