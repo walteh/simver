@@ -470,7 +470,7 @@ func TestNewTags(t *testing.T) {
 			},
 		},
 		{
-			name: "version 2 bug",
+			name: "when merging a branch that already is tagged correctly, don't do anything",
 			baseBranchTags: simver.Tags{
 				simver.Tag{Name: "v0.2.0-pr1+1"},
 				simver.Tag{Name: "v0.2.0"},

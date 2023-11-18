@@ -194,7 +194,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			},
 		},
 		{
-			name: "version 2 bug",
+			name: "when merging a branch that already is tagged correctly, don't do anything",
 			calculation: &simver.Calculation{
 				ForcePatch:        false,
 				IsMerge:           true,
@@ -212,7 +212,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			},
 		},
 		{
-			name: "when merging a branch that already is tagged correctly, don't do anything ()",
+			name: "when merging a branch that already is tagged correctly, don't do anything (ignoring force patch)",
 			calculation: &simver.Calculation{
 				ForcePatch:        true,
 				IsMerge:           true,
