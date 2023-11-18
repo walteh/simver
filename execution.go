@@ -39,6 +39,7 @@ func Calculate(ctx context.Context, ex Execution) *Calculation {
 		IsMerge:           ex.IsMerge(),
 		MostRecentLiveTag: mrlt,
 		ForcePatch:        ForcePatch(ctx, ex, mmrt),
+		Skip:              Skip(ctx, ex, mmrt),
 		MyMostRecentTag:   mmrt,
 		MyMostRecentBuild: MyMostRecentBuildNumber(ex),
 		PR:                ex.PR(),
@@ -87,8 +88,7 @@ func BumpPatch[S ~string](arg S) S {
 
 }
 
-func ForcePatch(ctx context.Context, ee Execution, mmrt MMRT) bool {
-	// if our head branch has a
+func Skip(ctx context.Context, ee Execution, mmrt MMRT) bool {
 	reg := regexp.MustCompile(fmt.Sprintf(`^%s$`, mmrt))
 
 	// head commit tags matching mmrt
@@ -96,20 +96,19 @@ func ForcePatch(ctx context.Context, ee Execution, mmrt MMRT) bool {
 		return reg.MatchString(s)
 	})
 
-	if len(hct) > 0 {
-		return false
-	}
+	return len(hct) > 0
+}
+
+func ForcePatch(ctx context.Context, ee Execution, mmrt MMRT) bool {
+	// if our head branch has a
+	reg := regexp.MustCompile(fmt.Sprintf(`^%s$`, mmrt))
 
 	// head branch tags matching mmrt
 	hbt := ee.HeadBranchTags().SemversMatching(func(s string) bool {
 		return reg.MatchString(s)
 	})
 
-	if len(hbt) > 0 {
-		return true
-	}
-
-	return false
+	return len(hbt) > 0
 }
 
 func MostRecentLiveTag(e Execution) MRLT {
