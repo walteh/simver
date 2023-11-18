@@ -229,6 +229,44 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MergeTags: []string{"v0.2.1"},
 			},
 		},
+		{
+			name: "when merging a branch that already is tagged correctly on first build, bump to next",
+			calculation: &simver.Calculation{
+				ForcePatch:        true,
+				IsMerge:           true,
+				MostRecentLiveTag: "v0.2.0",
+				MyMostRecentBuild: 0,
+				MyMostRecentTag:   "v0.2.0",
+				NextValidTag:      "v0.3.0",
+				PR:                1.000000,
+			},
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{},
+				HeadTags:  []string{},
+				RootTags:  []string{},
+				MergeTags: []string{"v0.3.0"},
+			},
+		},
+
+		{
+			name: "when starting a branch on the first build, bump to next",
+			calculation: &simver.Calculation{
+
+				ForcePatch:        true,
+				IsMerge:           false,
+				MostRecentLiveTag: "v0.4.1",
+				MyMostRecentBuild: 0.000000,
+				MyMostRecentTag:   "v0.4.1",
+				NextValidTag:      "v0.5.0",
+				PR:                3.000000,
+			},
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{"v0.5.0-pr3+base"},
+				HeadTags:  []string{"v0.5.0-pr3+1"},
+				RootTags:  []string{"v0.5.0-reserved"},
+				MergeTags: []string{},
+			},
+		},
 	}
 
 	ctx := context.Background()

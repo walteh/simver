@@ -30,7 +30,7 @@
                             },
                             {
                                 name: install simver,
-                                run: "go install github.com/walteh/simver/cmd/simver_github_actions@v0.4.1",
+                                run: "go install github.com/walteh/simver/cmd/simver_github_actions@v0.5.0",
                             },
                             {
                                 name: run simver,
