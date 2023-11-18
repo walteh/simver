@@ -5,7 +5,7 @@
     on:
         {
             workflow_dispatch: null,
-            workflow_call: { secrets: { GITHUB_TOKEN: { required: true } } },
+            workflow_call: {},
             push: { branches: [main] },
             pull_request: { types: [opened, synchronize, reopened, closed] },
         },
