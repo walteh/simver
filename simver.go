@@ -25,7 +25,7 @@ type rawExecution struct {
 	baseBranchTags Tags
 	headBranchTags Tags
 	isMerged       bool
-	isMinor        bool
+	isTargetingRoot        bool
 }
 
 func (e *rawExecution) Head() string {
@@ -72,7 +72,7 @@ func (e *rawExecution) RootBranchTags() Tags {
 	return e.rootBranchTags
 }
 
-func (e *rawExecution) IsMinor() bool {
+func (e *rawExecution) IsTargetingRoot() bool {
 	return e.baseBranch == e.rootBranch
 }
 

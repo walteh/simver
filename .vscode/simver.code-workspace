@@ -10,7 +10,7 @@
 							VSCODE
 		////////////////////////////////////////////// */
 		"workbench.tree.indent": 16,
-		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		// "editor.defaultFormatter": "esbenp.prettier-vscode",
 		"editor.formatOnSave": true,
 		"search.useIgnoreFiles": true,
 		"debug.console.wordWrap": false,
