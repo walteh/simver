@@ -1,4 +1,4 @@
-package exec
+package gitexec
 
 import (
 	"context"

@@ -10,7 +10,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
-	"github.com/walteh/simver/exec"
+	"github.com/walteh/simver/gitexec"
 	szl "github.com/walteh/snake/zerolog"
 	"github.com/walteh/terrors"
 )
@@ -95,7 +95,7 @@ func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.
 
 	repo = strings.TrimPrefix(repo, org+"/")
 
-	c := &exec.GitProviderOpts{
+	c := &gitexec.GitProviderOpts{
 		RepoPath:      repoPath,
 		Token:         token,
 		User:          "github-actions[bot]",
@@ -105,7 +105,7 @@ func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.
 		ReadOnly:      readOnly == "true" || readOnly == "1",
 	}
 
-	pr := &exec.GHProvierOpts{
+	pr := &gitexec.GHProvierOpts{
 		GitHubToken:  token,
 		RepoPath:     repoPath,
 		GHExecutable: "gh",
@@ -113,12 +113,12 @@ func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.
 		Repo:         repo,
 	}
 
-	git, err := exec.NewGitProvider(c)
+	git, err := gitexec.NewGitProvider(c)
 	if err != nil {
 		return nil, nil, nil, nil, nil, Err.Trace(err, "error creating git provider")
 	}
 
-	gh, err := exec.NewGHProvider(pr)
+	gh, err := gitexec.NewGHProvider(pr)
 	if err != nil {
 		return nil, nil, nil, nil, nil, Err.Trace(err, "error creating gh provider")
 	}
@@ -151,18 +151,6 @@ func main() {
 		fmt.Println(terrors.FormatErrorCaller(err))
 		os.Exit(1)
 	}
-
-	// if !keepgoing {
-	// 	zerolog.Ctx(ctx).Debug().Msg("execution is complete, likely because this is a push to a branch that is not main and not related to a PR")
-	// 	os.Exit(0)
-	// }
-
-	// isPush := os.Getenv("GITHUB_EVENT_NAME") == "push"
-
-	// if isPush && prd.HeadBranch != "main" {
-	// 	zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting because this is not a direct push to main")
-	// 	os.Exit(0)
-	// }
 
 	tt := simver.Calculate(ctx, ee).CalculateNewTagsRaw(ctx)
 
