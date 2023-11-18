@@ -190,8 +190,8 @@ func (_c *MockExecution_simver_IsMerge_Call) RunAndReturn(run func() bool) *Mock
 	return _c
 }
 
-// IsMinor provides a mock function with given fields:
-func (_m *MockExecution_simver) IsMinor() bool {
+// IsTargetingRoot provides a mock function with given fields:
+func (_m *MockExecution_simver) IsTargetingRoot() bool {
 	ret := _m.Called()
 
 	var r0 bool
@@ -204,29 +204,29 @@ func (_m *MockExecution_simver) IsMinor() bool {
 	return r0
 }
 
-// MockExecution_simver_IsMinor_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsMinor'
-type MockExecution_simver_IsMinor_Call struct {
+// MockExecution_simver_IsTargetingRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsTargetingRoot'
+type MockExecution_simver_IsTargetingRoot_Call struct {
 	*mock.Call
 }
 
-// IsMinor is a helper method to define mock.On call
-func (_e *MockExecution_simver_Expecter) IsMinor() *MockExecution_simver_IsMinor_Call {
-	return &MockExecution_simver_IsMinor_Call{Call: _e.mock.On("IsMinor")}
+// IsTargetingRoot is a helper method to define mock.On call
+func (_e *MockExecution_simver_Expecter) IsTargetingRoot() *MockExecution_simver_IsTargetingRoot_Call {
+	return &MockExecution_simver_IsTargetingRoot_Call{Call: _e.mock.On("IsTargetingRoot")}
 }
 
-func (_c *MockExecution_simver_IsMinor_Call) Run(run func()) *MockExecution_simver_IsMinor_Call {
+func (_c *MockExecution_simver_IsTargetingRoot_Call) Run(run func()) *MockExecution_simver_IsTargetingRoot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *MockExecution_simver_IsMinor_Call) Return(_a0 bool) *MockExecution_simver_IsMinor_Call {
+func (_c *MockExecution_simver_IsTargetingRoot_Call) Return(_a0 bool) *MockExecution_simver_IsTargetingRoot_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockExecution_simver_IsMinor_Call) RunAndReturn(run func() bool) *MockExecution_simver_IsMinor_Call {
+func (_c *MockExecution_simver_IsTargetingRoot_Call) RunAndReturn(run func() bool) *MockExecution_simver_IsTargetingRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }

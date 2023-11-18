@@ -4,18 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 	"github.com/walteh/simver"
 )
 
 func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 	testCases := []struct {
-		name              string
-		calculation       *simver.Calculation
-		expectedBaseTags  []string
-		expectedHeadTags  []string
-		expectedRootTags  []string
-		expectedMergeTags []string
+		name        string
+		calculation *simver.Calculation
+		output      *simver.CalculationOutput
 	}{
 		{
 			name: "expired mmrt",
@@ -28,16 +25,18 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				IsMerge:           false,
 				ForcePatch:        false,
 			},
-			expectedBaseTags: []string{
-				"v99.99.99-pr85+base",
+			output: &simver.CalculationOutput{
+				BaseTags: []string{
+					"v99.99.99-pr85+base",
+				},
+				HeadTags: []string{
+					"v99.99.99-pr85+34",
+				},
+				RootTags: []string{
+					"v99.99.99-reserved",
+				},
+				MergeTags: []string{},
 			},
-			expectedHeadTags: []string{
-				"v99.99.99-pr85+34",
-			},
-			expectedRootTags: []string{
-				"v99.99.99-reserved",
-			},
-			expectedMergeTags: []string{},
 		},
 		{
 			name: "missing all",
@@ -50,16 +49,19 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				IsMerge:           false,
 				ForcePatch:        false,
 			},
-			expectedBaseTags: []string{
-				"v3.3.3-pr1+base",
+
+			output: &simver.CalculationOutput{
+				BaseTags: []string{
+					"v3.3.3-pr1+base",
+				},
+				HeadTags: []string{
+					"v3.3.3-pr1+2",
+				},
+				RootTags: []string{
+					"v3.3.3-reserved",
+				},
+				MergeTags: []string{},
 			},
-			expectedHeadTags: []string{
-				"v3.3.3-pr1+2",
-			},
-			expectedRootTags: []string{
-				"v3.3.3-reserved",
-			},
-			expectedMergeTags: []string{},
 		},
 		{
 			name: "valid mmrt",
@@ -72,9 +74,13 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				IsMerge:           false,
 				ForcePatch:        false,
 			},
-			expectedBaseTags: []string{},
-			expectedHeadTags: []string{"v1.2.4-pr1+34"},
-			expectedRootTags: []string{},
+
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{},
+				HeadTags:  []string{"v1.2.4-pr1+34"},
+				RootTags:  []string{},
+				MergeTags: []string{},
+			},
 		},
 
 		{
@@ -88,16 +94,13 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				IsMerge:           false,
 				ForcePatch:        false,
 			},
-			expectedBaseTags: []string{
-				"v1.2.6-pr1+base",
+
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{"v1.2.6-pr1+base"},
+				HeadTags:  []string{"v1.2.6-pr1+34"},
+				RootTags:  []string{"v1.2.6-reserved"},
+				MergeTags: []string{},
 			},
-			expectedHeadTags: []string{
-				"v1.2.6-pr1+34",
-			},
-			expectedRootTags: []string{
-				"v1.2.6-reserved",
-			},
-			expectedMergeTags: []string{},
 		},
 		{
 			name: "valid mmrt with merge",
@@ -110,10 +113,12 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				IsMerge:           true,
 				ForcePatch:        false,
 			},
-			expectedBaseTags:  []string{},
-			expectedHeadTags:  []string{},
-			expectedRootTags:  []string{},
-			expectedMergeTags: []string{"v1.2.4"},
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{},
+				HeadTags:  []string{},
+				RootTags:  []string{},
+				MergeTags: []string{"v1.2.4"},
+			},
 		},
 		{
 			name: "valid mmrt with force patch",
@@ -126,10 +131,12 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				IsMerge:           false,
 				ForcePatch:        true,
 			},
-			expectedBaseTags:  []string{"v1.2.5-pr1+base"},
-			expectedHeadTags:  []string{"v1.2.5-pr1+34"},
-			expectedRootTags:  []string{"v1.2.5-reserved"},
-			expectedMergeTags: []string{},
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{"v1.2.5-pr1+base"},
+				HeadTags:  []string{"v1.2.5-pr1+34"},
+				RootTags:  []string{"v1.2.5-reserved"},
+				MergeTags: []string{},
+			},
 		},
 		{
 			name: "valid mmrt with force patch (merge override)",
@@ -142,10 +149,12 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				IsMerge:           true,
 				ForcePatch:        true,
 			},
-			expectedBaseTags:  []string{},
-			expectedHeadTags:  []string{},
-			expectedRootTags:  []string{},
-			expectedMergeTags: []string{"v1.2.4"},
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{},
+				HeadTags:  []string{},
+				RootTags:  []string{},
+				MergeTags: []string{"v1.2.4"},
+			},
 		},
 		{
 			name: "expired mmrt with force patch",
@@ -158,16 +167,12 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				IsMerge:           false,
 				ForcePatch:        true,
 			},
-			expectedBaseTags: []string{
-				"v1.9.10-pr85+base",
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{"v1.9.10-pr85+base"},
+				HeadTags:  []string{"v1.9.10-pr85+34"},
+				RootTags:  []string{"v1.9.10-reserved"},
+				MergeTags: []string{},
 			},
-			expectedHeadTags: []string{
-				"v1.9.10-pr85+34",
-			},
-			expectedRootTags: []string{
-				"v1.9.10-reserved",
-			},
-			expectedMergeTags: []string{},
 		},
 
 		{
@@ -181,43 +186,61 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				NextValidTag:      "v0.18.0",
 				PR:                13.000000,
 			},
-			expectedBaseTags: []string{
-				// "v0.18.0-pr13+base",
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{},
+				HeadTags:  []string{"v0.17.3-pr13+2"},
+				RootTags:  []string{},
+				MergeTags: []string{},
 			},
-			expectedHeadTags: []string{
-				"v0.17.3-pr13+2",
-			},
-			expectedRootTags: []string{
-				// "v0.18.0-reserved",
-			},
-			expectedMergeTags: []string{},
 		},
-		// Add more test cases here...
+		{
+			name: "when merging a branch that already is tagged correctly, don't do anything",
+			calculation: &simver.Calculation{
+				ForcePatch:        false,
+				IsMerge:           true,
+				MostRecentLiveTag: "v0.3.0",
+				MyMostRecentBuild: 1.000000,
+				MyMostRecentTag:   "v0.3.0",
+				NextValidTag:      "v0.4.0",
+				PR:                1.000000,
+			},
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{},
+				HeadTags:  []string{},
+				RootTags:  []string{},
+				MergeTags: []string{},
+			},
+		},
+		{
+			name: "when merging a branch that already is tagged correctly, don't do anything (ignoring force patch)",
+			calculation: &simver.Calculation{
+				ForcePatch:        true,
+				IsMerge:           true,
+				MostRecentLiveTag: "v0.2.0",
+				MyMostRecentBuild: 1.000000,
+				MyMostRecentTag:   "v0.2.0",
+				NextValidTag:      "v0.3.0",
+				PR:                1.000000,
+			},
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{},
+				HeadTags:  []string{},
+				RootTags:  []string{},
+				MergeTags: []string{},
+			},
+		},
 	}
 
 	ctx := context.Background()
 
 	for _, tc := range testCases {
-		for _, i := range []string{"base", "head", "root", "merge"} {
-			t.Run(tc.name+"_"+i, func(t *testing.T) {
-				out := tc.calculation.CalculateNewTagsRaw(ctx)
+		t.Run(tc.name, func(t *testing.T) {
+			out := tc.calculation.CalculateNewTagsRaw(ctx)
+			assert.ElementsMatch(t, tc.output.BaseTags, out.BaseTags, "base tags do not match")
+			assert.ElementsMatch(t, tc.output.HeadTags, out.HeadTags, "head tags do not match")
+			assert.ElementsMatch(t, tc.output.RootTags, out.RootTags, "root tags do not match")
+			assert.ElementsMatch(t, tc.output.MergeTags, out.MergeTags, "merge tags do not match")
+		})
 
-				if i == "base" {
-					require.NotContains(t, out.BaseTags, "", "Base tags contain empty string")
-					require.ElementsMatch(t, tc.expectedBaseTags, out.BaseTags, "Base tags do not match")
-				} else if i == "head" {
-					require.NotContains(t, out.HeadTags, "", "Head tags contain empty string")
-					require.ElementsMatch(t, tc.expectedHeadTags, out.HeadTags, "Head tags do not match")
-				} else if i == "root" {
-					require.NotContains(t, out.RootTags, "", "Root tags contain empty string")
-					require.ElementsMatch(t, tc.expectedRootTags, out.RootTags, "Root tags do not match")
-				} else if i == "merge" {
-					require.NotContains(t, out.MergeTags, "", "Merge tags contain empty string")
-					require.ElementsMatch(t, tc.expectedMergeTags, out.MergeTags, "Merge tags do not match")
-				} else {
-					require.Fail(t, "invalid test case")
-				}
-			})
-		}
 	}
 }

@@ -145,17 +145,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	ee, _, keepgoing, err := simver.LoadExecution(ctx, tagprov, prr)
+	ee, _, err := simver.LoadExecution(ctx, tagprov, prr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution")
 		fmt.Println(terrors.FormatErrorCaller(err))
 		os.Exit(1)
 	}
 
-	if !keepgoing {
-		zerolog.Ctx(ctx).Debug().Msg("execution is complete, likely because this is a push to a branch that is not main and not related to a PR")
-		os.Exit(0)
-	}
+	// if !keepgoing {
+	// 	zerolog.Ctx(ctx).Debug().Msg("execution is complete, likely because this is a push to a branch that is not main and not related to a PR")
+	// 	os.Exit(0)
+	// }
 
 	// isPush := os.Getenv("GITHUB_EVENT_NAME") == "push"
 

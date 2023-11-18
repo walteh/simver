@@ -10,22 +10,22 @@ var _ Execution = &rawExecution{}
 var _ RefProvider = &rawExecution{}
 
 type rawExecution struct {
-	pr             *PRDetails
-	baseBranch     string
-	headBranch     string
-	rootBranch     string
-	headCommit     string
-	baseCommit     string
-	rootCommit     string
-	mergeCommit    string
-	rootBranchTags Tags
-	rootCommitTags Tags
-	headCommitTags Tags
-	baseCommitTags Tags
-	baseBranchTags Tags
-	headBranchTags Tags
-	isMerged       bool
-	isMinor        bool
+	pr              *PRDetails
+	baseBranch      string
+	headBranch      string
+	rootBranch      string
+	headCommit      string
+	baseCommit      string
+	rootCommit      string
+	mergeCommit     string
+	rootBranchTags  Tags
+	rootCommitTags  Tags
+	headCommitTags  Tags
+	baseCommitTags  Tags
+	baseBranchTags  Tags
+	headBranchTags  Tags
+	isMerged        bool
+	isTargetingRoot bool
 }
 
 func (e *rawExecution) Head() string {
@@ -72,7 +72,7 @@ func (e *rawExecution) RootBranchTags() Tags {
 	return e.rootBranchTags
 }
 
-func (e *rawExecution) IsMinor() bool {
+func (e *rawExecution) IsTargetingRoot() bool {
 	return e.baseBranch == e.rootBranch
 }
 
@@ -80,40 +80,36 @@ func (e *rawExecution) HeadCommitTags() Tags {
 	return e.headCommitTags
 }
 
-func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Execution, *PRDetails, bool, error) {
+func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Execution, *PRDetails, error) {
 
 	pr, err := prr.CurrentPR(ctx)
 	if err != nil {
-		return nil, nil, false, err
-	}
-
-	if pr.IsSimulatedPush() && pr.HeadBranch != "main" {
-		return nil, nil, false, nil
+		return nil, nil, err
 	}
 
 	_, err = tprov.FetchTags(ctx)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, err
 	}
 
 	baseCommitTags, err := tprov.TagsFromCommit(ctx, pr.BaseCommit)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, err
 	}
 
 	baseBranchTags, err := tprov.TagsFromBranch(ctx, pr.BaseBranch)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, err
 	}
 
 	rootCommitTags, err := tprov.TagsFromCommit(ctx, pr.RootCommit)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, err
 	}
 
 	rootBranchTags, err := tprov.TagsFromBranch(ctx, pr.RootBranch)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, err
 	}
 
 	var headBranchTags Tags
@@ -126,14 +122,14 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		headCommit = pr.HeadCommit
 		branchTags, err := tprov.TagsFromBranch(ctx, pr.HeadBranch)
 		if err != nil {
-			return nil, nil, false, err
+			return nil, nil, err
 		}
 		headBranchTags = branchTags
 	}
 
 	headTags, err := tprov.TagsFromCommit(ctx, headCommit)
 	if err != nil {
-		return nil, nil, false, err
+		return nil, nil, err
 	}
 
 	zerolog.Ctx(ctx).Debug().
@@ -161,6 +157,6 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		rootBranchTags: rootBranchTags,
 		rootCommitTags: rootCommitTags,
 		mergeCommit:    pr.MergeCommit,
-	}, pr, true, nil
+	}, pr, nil
 
 }

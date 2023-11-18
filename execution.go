@@ -15,7 +15,7 @@ import (
 
 type Execution interface {
 	PR() int
-	IsMinor() bool
+	IsTargetingRoot() bool
 	IsMerge() bool
 	HeadCommitTags() Tags
 	HeadBranchTags() Tags
@@ -35,8 +35,6 @@ func Calculate(ctx context.Context, ex Execution) *Calculation {
 
 	maxlr := MaxLiveOrReservedTag(mrlt, mrrt)
 
-	// maxmr := MaxMyOrReservedTag(mrrt, mmrt)
-
 	return &Calculation{
 		IsMerge:           ex.IsMerge(),
 		MostRecentLiveTag: mrlt,
@@ -44,7 +42,7 @@ func Calculate(ctx context.Context, ex Execution) *Calculation {
 		MyMostRecentTag:   mmrt,
 		MyMostRecentBuild: MyMostRecentBuildNumber(ex),
 		PR:                ex.PR(),
-		NextValidTag:      GetNextValidTag(ctx, ex.IsMinor(), maxlr),
+		NextValidTag:      GetNextValidTag(ctx, ex.IsTargetingRoot(), maxlr),
 	}
 }
 
