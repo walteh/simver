@@ -470,7 +470,7 @@ func TestNewTags(t *testing.T) {
 			},
 		},
 		{
-			name: "when merging a branch that already is tagged correctly, don't do anything",
+			name: "when merging a branch that already is tagged correctly, bump by patch",
 			baseBranchTags: simver.Tags{
 				simver.Tag{Name: "v0.2.0-pr1+1"},
 				simver.Tag{Name: "v0.2.0"},
@@ -499,7 +499,9 @@ func TestNewTags(t *testing.T) {
 			pr:              1,
 			isMerge:         true,
 			isTargetingRoot: true,
-			expectedTags:    simver.Tags{},
+			expectedTags: simver.Tags{
+				simver.Tag{Name: "v0.3.1", Ref: merge_ref},
+			},
 		},
 	}
 

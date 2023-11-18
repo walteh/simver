@@ -62,12 +62,12 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 
 	mrlt := string(me.MostRecentLiveTag)
 
-	matching := mmrt == mrlt
-
 	// first we check to see if mrlt exists, if not we set it to the base
 	if mrlt == "" {
 		mrlt = baseTag
 	}
+
+	matching := mmrt == mrlt
 
 	validMmrt := false
 
@@ -77,7 +77,7 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 	}
 
 	// force patch is ignored if this is a merge
-	if me.ForcePatch && !me.IsMerge {
+	if (me.ForcePatch && !me.IsMerge) || matching {
 		nvt = BumpPatch(mmrt)
 		validMmrt = false
 	}
@@ -93,9 +93,9 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 	}
 
 	if me.IsMerge {
-		if !matching {
-			out.MergeTags = append(out.MergeTags, mmrt)
-		}
+		// if !matching {
+		out.MergeTags = append(out.MergeTags, mmrt)
+		// }
 	} else {
 		if me.PR == 0 {
 			out.HeadTags = append(out.HeadTags, mmrt)
