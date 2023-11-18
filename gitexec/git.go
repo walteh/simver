@@ -36,6 +36,18 @@ type GitProviderOpts struct {
 	ReadOnly      bool
 }
 
+func NewLocalReadOnlyGitProvider(executable string, repoPath string) (simver.GitProvider, error) {
+	return &gitProvider{
+		RepoPath:      repoPath,
+		Token:         "",
+		TokenEnvName:  "",
+		User:          "",
+		Email:         "",
+		GitExecutable: executable,
+		ReadOnly:      true,
+	}, nil
+}
+
 func NewGitProvider(opts *GitProviderOpts) (*gitProvider, error) {
 	if opts.RepoPath == "" {
 		return nil, ErrExecGit.Trace("repo path is required")
