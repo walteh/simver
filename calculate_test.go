@@ -194,7 +194,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			},
 		},
 		{
-			name: "expired mmrt with force patch",
+			name: "version 2 bug",
 			calculation: &simver.Calculation{
 				ForcePatch:        false,
 				IsMerge:           true,
@@ -202,6 +202,24 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild: 1.000000,
 				MyMostRecentTag:   "v0.3.0",
 				NextValidTag:      "v0.4.0",
+				PR:                1.000000,
+			},
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{},
+				HeadTags:  []string{},
+				RootTags:  []string{},
+				MergeTags: []string{},
+			},
+		},
+		{
+			name: "when merging a branch that already is tagged correctly, don't do anything ()",
+			calculation: &simver.Calculation{
+				ForcePatch:        true,
+				IsMerge:           true,
+				MostRecentLiveTag: "v0.2.0",
+				MyMostRecentBuild: 1.000000,
+				MyMostRecentTag:   "v0.2.0",
+				NextValidTag:      "v0.3.0",
 				PR:                1.000000,
 			},
 			output: &simver.CalculationOutput{

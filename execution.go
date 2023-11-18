@@ -35,7 +35,6 @@ func Calculate(ctx context.Context, ex Execution) *Calculation {
 
 	maxlr := MaxLiveOrReservedTag(mrlt, mrrt)
 
-
 	return &Calculation{
 		IsMerge:           ex.IsMerge(),
 		MostRecentLiveTag: mrlt,
