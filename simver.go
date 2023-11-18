@@ -61,7 +61,7 @@ func (e *rawExecution) PR() int {
 }
 
 func (e *rawExecution) IsMerge() bool {
-	return e.pr.Merged
+	return !e.pr.IsSimulatedPush() && e.pr.Merged
 }
 
 func (e *rawExecution) RootBranch() string {

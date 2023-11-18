@@ -62,22 +62,31 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 
 	mrlt := string(me.MostRecentLiveTag)
 
-	matching := mmrt == mrlt
-
 	// first we check to see if mrlt exists, if not we set it to the base
 	if mrlt == "" {
 		mrlt = baseTag
 	}
 
+	// mmrt and mrlt will always be the same on the first pr build
+	// matching := mmrt == mrlt && me.MyMostRecentBuild != 0
+
 	validMmrt := false
 
 	// first we validate that mmrt is still valid, which means it is greater than or equal to mrlt
-	if mmrt != "" && semver.Compare(mmrt, mrlt) >= 0 {
+	if mmrt != "" && semver.Compare(mmrt, mrlt) > 0 {
 		validMmrt = true
 	}
 
-	// force patch is ignored if this is a merge
-	if me.ForcePatch && !me.IsMerge {
+	if mmrt != "" && semver.Compare(mmrt, mrlt) == 0 && me.MyMostRecentBuild != 0 {
+		validMmrt = false
+		nvt = BumpPatch(mmrt)
+	}
+
+	if me.MyMostRecentBuild == 0 {
+		validMmrt = false
+
+		// force patch is ignored if this is a merge
+	} else if me.ForcePatch && !me.IsMerge {
 		nvt = BumpPatch(mmrt)
 		validMmrt = false
 	}
@@ -87,15 +96,15 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 		mmrt = nvt
 		// pr will be 0 if this is not a and is a push to the root branch
 		if me.PR != 0 && !me.IsMerge {
-			out.RootTags = append(out.RootTags, nvt+"-reserved")
-			out.BaseTags = append(out.BaseTags, nvt+fmt.Sprintf("-pr%d+base", me.PR))
+			out.RootTags = append(out.RootTags, mmrt+"-reserved")
+			out.BaseTags = append(out.BaseTags, mmrt+fmt.Sprintf("-pr%d+base", me.PR))
 		}
 	}
 
 	if me.IsMerge {
-		if !matching {
-			out.MergeTags = append(out.MergeTags, mmrt)
-		}
+		// if !matching {
+		out.MergeTags = append(out.MergeTags, mmrt)
+		// }
 	} else {
 		if me.PR == 0 {
 			out.HeadTags = append(out.HeadTags, mmrt)
