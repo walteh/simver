@@ -90,13 +90,13 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 		nvt = BumpPatch(mmrt)
 	}
 
-	if me.MyMostRecentBuild == 0 {
-		validMmrt = false
-
-		// force patch is ignored if this is a merge
-	} else if me.ForcePatch && !me.IsMerge {
-		nvt = BumpPatch(mmrt)
-		validMmrt = false
+	if !me.IsMerge {
+		if me.MyMostRecentBuild == 0 {
+			validMmrt = false
+		} else if me.ForcePatch {
+			nvt = BumpPatch(mmrt)
+			validMmrt = false
+		}
 	}
 
 	// if mmrt is invalid, then we need to reserve a new mmrt (which is the same as nvt)

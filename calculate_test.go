@@ -287,6 +287,25 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MergeTags: []string{},
 			},
 		},
+		{
+			name: "if is merge, build is 0, skip is false - tag mmrt",
+			calculation: &simver.Calculation{
+				ForcePatch:        false,
+				IsMerge:           true,
+				MostRecentLiveTag: "v0.18.0",
+				MyMostRecentBuild: 0.000000,
+				MyMostRecentTag:   "v0.18.1",
+				NextValidTag:      "v0.19.0",
+				PR:                14.000000,
+				Skip:              false,
+			},
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{},
+				HeadTags:  []string{},
+				RootTags:  []string{},
+				MergeTags: []string{"v0.18.1"},
+			},
+		},
 	}
 
 	ctx := context.Background()
