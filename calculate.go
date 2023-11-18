@@ -17,6 +17,7 @@ type Calculation struct {
 	NextValidTag      NVT
 	IsMerge           bool
 	ForcePatch        bool
+	Skip              bool
 }
 
 var (
@@ -54,6 +55,13 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 		HeadTags:  []string{},
 		RootTags:  []string{},
 		MergeTags: []string{},
+	}
+
+	if me.Skip {
+		zerolog.Ctx(ctx).Debug().
+			Any("calculation", me).
+			Msg("Skipping calculation")
+		return out
 	}
 
 	nvt := string(me.NextValidTag)

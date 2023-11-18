@@ -470,7 +470,41 @@ func TestNewTags(t *testing.T) {
 			},
 		},
 		{
-			name: "when merging a branch that already is tagged correctly, bump by patch",
+			name: "when merging a branch that already is tagged correctly, but not on head, bump by patch",
+			baseBranchTags: simver.Tags{
+				simver.Tag{Name: "v0.2.0-pr1+1"},
+				simver.Tag{Name: "v0.2.0"},
+				simver.Tag{Name: "v0.3.0-pr1+base"},
+				simver.Tag{Name: "v0.3.0-reserved"},
+				simver.Tag{Name: "v0.3.0"},
+			},
+			headBranchTags: simver.Tags{
+				simver.Tag{Name: "v0.2.0-pr1+1"},
+				simver.Tag{Name: "v0.2.0"},
+				simver.Tag{Name: "v0.3.0-pr1+base"},
+				simver.Tag{Name: "v0.3.0-reserved"},
+				simver.Tag{Name: "v0.3.0"},
+			},
+			headCommitTags: simver.Tags{
+				simver.Tag{Name: "v0.3.0-reserved"},
+				// simver.Tag{Name: "v0.3.0"},
+			},
+			rootBranchTags: simver.Tags{
+				simver.Tag{Name: "v0.2.0-pr1+1"},
+				simver.Tag{Name: "v0.2.0"},
+				simver.Tag{Name: "v0.3.0-pr1+base"},
+				simver.Tag{Name: "v0.3.0-reserved"},
+				simver.Tag{Name: "v0.3.0"},
+			},
+			pr:              1,
+			isMerge:         true,
+			isTargetingRoot: true,
+			expectedTags: simver.Tags{
+				simver.Tag{Name: "v0.3.1", Ref: merge_ref},
+			},
+		},
+		{
+			name: "when merging a branch that already is tagged correctly, on head, do nothing",
 			baseBranchTags: simver.Tags{
 				simver.Tag{Name: "v0.2.0-pr1+1"},
 				simver.Tag{Name: "v0.2.0"},
@@ -499,9 +533,7 @@ func TestNewTags(t *testing.T) {
 			pr:              1,
 			isMerge:         true,
 			isTargetingRoot: true,
-			expectedTags: simver.Tags{
-				simver.Tag{Name: "v0.3.1", Ref: merge_ref},
-			},
+			expectedTags:    simver.Tags{},
 		},
 	}
 
