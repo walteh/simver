@@ -5,7 +5,7 @@
     on:
         {
             workflow_dispatch: null,
-            workflow_call: null,
+            workflow_call: { secrets: { GITHUB_TOKEN: { required: true } } },
             push: { branches: [main] },
             pull_request: { types: [opened, synchronize, reopened, closed] },
         },
@@ -30,7 +30,7 @@
                             },
                             {
                                 name: install simver,
-                                run: "go install github.com/walteh/simver/cmd/simver_github_actions@v0.4.1-pr2+1",
+                                run: "go install github.com/walteh/simver/cmd/simver_github_actions@v0.4.1",
                             },
                             {
                                 name: run simver,
