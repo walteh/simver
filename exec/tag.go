@@ -13,6 +13,7 @@ import (
 
 var (
 	_ simver.TagProvider = (*gitProvider)(nil)
+	_ simver.TagWriter   = (*gitProvider)(nil)
 )
 
 func (p *gitProvider) TagsFromCommit(ctx context.Context, commitHash string) (simver.Tags, error) {

@@ -84,7 +84,7 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 
 }
 
-func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.PRProvider, *PullRequestResolver, error) {
+func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.TagWriter, simver.PRProvider, *PullRequestResolver, error) {
 
 	token := os.Getenv("GITHUB_TOKEN")
 	repoPath := os.Getenv("GITHUB_WORKSPACE")
@@ -115,20 +115,20 @@ func NewGitHubActionsProvider() (simver.GitProvider, simver.TagProvider, simver.
 
 	git, err := exec.NewGitProvider(c)
 	if err != nil {
-		return nil, nil, nil, nil, Err.Trace(err, "error creating git provider")
+		return nil, nil, nil, nil, nil, Err.Trace(err, "error creating git provider")
 	}
 
 	gh, err := exec.NewGHProvider(pr)
 	if err != nil {
-		return nil, nil, nil, nil, Err.Trace(err, "error creating gh provider")
+		return nil, nil, nil, nil, nil, Err.Trace(err, "error creating gh provider")
 	}
 
 	gha, err := NewGitProviderGithubActions(git)
 	if err != nil {
-		return nil, nil, nil, nil, Err.Trace(err, "error creating gh provider")
+		return nil, nil, nil, nil, nil, Err.Trace(err, "error creating gh provider")
 	}
 
-	return gha, git, gh, &PullRequestResolver{gh, git}, nil
+	return gha, git, git, gh, &PullRequestResolver{gh, git}, nil
 }
 
 func main() {
@@ -139,7 +139,7 @@ func main() {
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
-	_, tagprov, _, prr, err := NewGitHubActionsProvider()
+	_, tagprov, tagwriter, _, prr, err := NewGitHubActionsProvider()
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error creating provider")
 		os.Exit(1)
@@ -168,7 +168,7 @@ func main() {
 
 	tags := tt.ApplyRefs(ee.ProvideRefs())
 
-	err = tagprov.CreateTags(ctx, tags...)
+	err = tagwriter.CreateTags(ctx, tags...)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
 		fmt.Println(terrors.FormatErrorCaller(err))
