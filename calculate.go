@@ -1,28 +1,60 @@
 package simver
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/rs/zerolog"
 	"github.com/walteh/terrors"
 	"golang.org/x/mod/semver"
 )
 
 type Calculation struct {
-	MyMostRecentTag       MMRT
-	MostRecentLiveTag     MRLT
-	MyMostRecentBuild     MMRBN
-	MostRecentReservedTag MRRT
-	PR                    int
-	NextValidTag          NVT
+	MyMostRecentTag   MMRT
+	MostRecentLiveTag MRLT
+	MyMostRecentBuild MMRBN
+	PR                int
+	NextValidTag      NVT
+	IsMerge           bool
+	ForcePatch        bool
 }
 
 var (
 	ErrValidatingCalculation = terrors.New("ErrValidatingCalculation")
 )
 
-func (me *Calculation) CalculateNewTagsRaw() ([]string, []string) {
-	baseTags := make([]string, 0)
-	headTags := make([]string, 0)
+type CalculationOutput struct {
+	BaseTags  []string
+	HeadTags  []string
+	RootTags  []string
+	MergeTags []string
+}
+
+func (out *CalculationOutput) ApplyRefs(opts RefProvider) Tags {
+	tags := make(Tags, 0)
+	for _, tag := range out.BaseTags {
+		tags = append(tags, Tag{Name: tag, Ref: opts.Base()})
+	}
+
+	for _, tag := range out.HeadTags {
+		tags = append(tags, Tag{Name: tag, Ref: opts.Head()})
+	}
+	for _, tag := range out.RootTags {
+		tags = append(tags, Tag{Name: tag, Ref: opts.Root()})
+	}
+	for _, tag := range out.MergeTags {
+		tags = append(tags, Tag{Name: tag, Ref: opts.Merge()})
+	}
+	return tags
+}
+
+func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutput {
+	out := &CalculationOutput{
+		BaseTags:  []string{},
+		HeadTags:  []string{},
+		RootTags:  []string{},
+		MergeTags: []string{},
+	}
 
 	nvt := string(me.NextValidTag)
 
@@ -42,15 +74,42 @@ func (me *Calculation) CalculateNewTagsRaw() ([]string, []string) {
 		validMmrt = true
 	}
 
+	// force patch is ignored if this is a merge
+	if me.ForcePatch && !me.IsMerge {
+		nvt = BumpPatch(mmrt)
+		validMmrt = false
+	}
+
 	// if mmrt is invalid, then we need to reserve a new mmrt (which is the same as nvt)
 	if !validMmrt {
 		mmrt = nvt
-		baseTags = append(baseTags, nvt+"-reserved")
-		baseTags = append(baseTags, nvt+fmt.Sprintf("-pr%d+base", me.PR))
+		// pr will be 0 if this is not a and is a push to the root branch
+		if me.PR != 0 {
+			out.RootTags = append(out.RootTags, nvt+"-reserved")
+			out.BaseTags = append(out.BaseTags, nvt+fmt.Sprintf("-pr%d+base", me.PR))
+		}
 	}
 
-	// then finally we tag mmrt
-	headTags = append(headTags, mmrt+fmt.Sprintf("-pr%d+%d", me.PR, int(me.MyMostRecentBuild)+1))
+	if me.IsMerge {
+		out.MergeTags = append(out.MergeTags, mmrt)
+	} else {
+		if me.PR == 0 {
+			out.HeadTags = append(out.HeadTags, mmrt)
+		} else {
+			out.HeadTags = append(out.HeadTags, mmrt+fmt.Sprintf("-pr%d+%d", me.PR, int(me.MyMostRecentBuild)+1))
+		}
+	}
 
-	return baseTags, headTags
+	zerolog.Ctx(ctx).Debug().
+		Any("calculation", me).
+		Any("output", out).
+		Str("mmrt", mmrt).
+		Str("mrlt", mrlt).
+		Str("nvt", nvt).
+		Str("pr", fmt.Sprintf("%d", me.PR)).
+		Bool("isMerge", me.IsMerge).
+		Bool("forcePatch", me.ForcePatch).
+		Msg("CalculateNewTagsRaw")
+
+	return out
 }

@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
@@ -26,6 +25,7 @@ type PullRequestResolver struct {
 }
 
 func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails, error) {
+
 	head_ref := os.Getenv("GITHUB_REF")
 
 	if head_ref != "" && strings.HasPrefix(head_ref, "refs/pull/") {
@@ -59,14 +59,6 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 
 	sha := os.Getenv("GITHUB_SHA")
 
-	// // this is a push event, we need to find the PR (if any) that this push is for
-
-	// // get the commit hash
-	// commit, err := p.git.GetHeadRef(ctx)
-	// if err != nil {
-	// 	return nil, Err.Trace(err, "error getting commit hash")
-	// }
-
 	pr, exists, err := p.gh.PRDetailsByCommit(ctx, sha)
 	if err != nil {
 		return nil, Err.Trace(err, "error getting PR details by commit")
@@ -76,19 +68,10 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 		return pr, nil
 	}
 
-	// // get the branch
-	// branch, err := p.git.Branch(ctx)
-	// if err != nil {
-	// 	return nil, Err.Trace(err, "error getting branch")
-	// }
+	isPush := os.Getenv("GITHUB_EVENT_NAME") == "push"
 
-	// pr, exists, err = p.gh.PRDetailsByBranch(ctx, branch)
-	// if err != nil {
-	// 	return nil, Err.Trace(err, "error getting PR details by branch")
-	// }
-
-	if exists {
-		return pr, nil
+	if !isPush {
+		return nil, errors.New("not a PR event and not a push event")
 	}
 
 	// get the parent commit
@@ -97,16 +80,7 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 		return nil, Err.Trace(err, "error getting parent commit")
 	}
 
-	return &simver.PRDetails{
-		Number:               0,
-		HeadBranch:           branch,
-		BaseBranch:           branch,
-		Merged:               true,
-		MergeCommit:          sha,
-		HeadCommit:           sha,
-		BaseCommit:           parent,
-		PotentialMergeCommit: "",
-	}, nil
+	return simver.NewPushSimulatedPRDetails(parent, sha, branch), nil
 
 }
 
@@ -171,58 +145,35 @@ func main() {
 		os.Exit(1)
 	}
 
-	ee, err := simver.LoadExecution(ctx, tagprov, prr)
+	ee, _, keepgoing, err := simver.LoadExecution(ctx, tagprov, prr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution")
 		fmt.Println(terrors.FormatErrorCaller(err))
-
 		os.Exit(1)
 	}
 
-	tags := simver.NewTags(ee)
-
-	reservedTag, reserved := tags.GetReserved()
-
-	tries := 0
-
-	for reserved {
-
-		err := tagprov.CreateTag(ctx, reservedTag)
-		if err != nil {
-			if tries > 5 {
-				zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
-				fmt.Println(terrors.FormatErrorCaller(err))
-
-				os.Exit(1)
-			}
-
-			time.Sleep(1 * time.Second)
-			ee, err := simver.LoadExecution(ctx, tagprov, prr)
-			if err != nil {
-				zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution: %v", err)
-				fmt.Println(terrors.FormatErrorCaller(err))
-
-				os.Exit(1)
-			}
-			tags := simver.NewTags(ee)
-			reservedTag, reserved = tags.GetReserved()
-		} else {
-			reserved = false
-		}
+	if !keepgoing {
+		zerolog.Ctx(ctx).Debug().Msg("execution is complete, likely because this is a push to a branch that is not main and not related to a PR")
+		os.Exit(0)
 	}
 
-	for _, tag := range tags {
-		if tag.Name == reservedTag.Name && tag.Ref == reservedTag.Ref {
-			continue
-		}
+	// isPush := os.Getenv("GITHUB_EVENT_NAME") == "push"
 
-		err := tagprov.CreateTag(ctx, tag)
-		if err != nil {
-			zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
-			fmt.Println(terrors.FormatErrorCaller(err))
+	// if isPush && prd.HeadBranch != "main" {
+	// 	zerolog.Ctx(ctx).Debug().Msg("execution is complete, exiting because this is not a direct push to main")
+	// 	os.Exit(0)
+	// }
 
-			os.Exit(1)
-		}
+	tt := simver.Calculate(ctx, ee).CalculateNewTagsRaw(ctx)
+
+	tags := tt.ApplyRefs(ee.ProvideRefs())
+
+	err = tagprov.CreateTags(ctx, tags...)
+	if err != nil {
+		zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
+		fmt.Println(terrors.FormatErrorCaller(err))
+
+		os.Exit(1)
 	}
 
 }

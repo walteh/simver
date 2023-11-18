@@ -102,6 +102,7 @@ type githubPR struct {
 func (me *githubPR) toPRDetails() *simver.PRDetails {
 	return &simver.PRDetails{
 		Number:               me.Number,
+		RootBranch:           "main",
 		HeadBranch:           me.HeadRefName,
 		BaseBranch:           me.BaseRefName,
 		Merged:               me.State == "MERGED",
@@ -124,14 +125,29 @@ func (p *ghProvider) getRelevantPR(ctx context.Context, out []byte) (*simver.PRD
 		return nil, false, err
 	}
 
+	ret := func(pr *githubPR) (*simver.PRDetails, bool, error) {
+		dets := pr.toPRDetails()
+		dets.BaseCommit, err = p.getBaseCommit(ctx, dets)
+		if err != nil {
+			return nil, false, err
+		}
+		dets.RootCommit, err = p.getRootCommit(ctx)
+		if err != nil {
+			return nil, false, err
+		}
+		return dets, true, nil
+	}
+
+	// first check if there is a merged PR
 	for _, pr := range dat {
-		if pr.State == "MERGED" || pr.State == "OPEN" {
-			dets := pr.toPRDetails()
-			dets.BaseCommit, err = p.getBaseCommit(ctx, dets)
-			if err != nil {
-				return nil, false, err
-			}
-			return dets, true, nil
+		if pr.State == "MERGED" {
+			return ret(pr)
+		}
+	}
+
+	for _, pr := range dat {
+		if pr.State == "OPEN" {
+			return ret(pr)
 		}
 	}
 
@@ -208,6 +224,33 @@ func (p *ghProvider) getBaseCommit(ctx context.Context, dets *simver.PRDetails) 
 	}
 
 	return dat.Parents[0].Sha, nil
+}
+
+func (p *ghProvider) getRootCommit(ctx context.Context) (string, error) {
+	zerolog.Ctx(ctx).Debug().Msg("Getting root commit")
+
+	cmd := p.gh(ctx, "api", "-H", "Accept: application/vnd.github+json", fmt.Sprintf("/repos/%s/%s/git/ref/heads/main", p.Org, p.Repo))
+	out, err := cmd.Output()
+	if err != nil {
+		return "", ErrExecGH.Trace(err)
+	}
+
+	var dat struct {
+		Object struct {
+			Sha string `json:"sha"`
+		} `json:"object"`
+	}
+
+	err = json.Unmarshal(out, &dat)
+	if err != nil {
+		return "", ErrExecGH.Trace(err)
+	}
+
+	if dat.Object.Sha == "" {
+		return "", ErrExecGH.Trace("no sha found")
+	}
+
+	return dat.Object.Sha, nil
 }
 
 func (p *ghProvider) PRDetailsByCommit(ctx context.Context, commitHash string) (*simver.PRDetails, bool, error) {

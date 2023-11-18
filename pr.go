@@ -7,15 +7,33 @@ type PRDetails struct {
 	Number               int
 	HeadBranch           string
 	BaseBranch           string
+	RootBranch           string // always main
 	Merged               bool
 	MergeCommit          string
 	HeadCommit           string
-	BaseCommit           string
 	PotentialMergeCommit string
+
+	BaseCommit string
+	RootCommit string
 }
 
-func (d *PRDetails) IsReal() bool {
-	return d.Number != 0
+func NewPushSimulatedPRDetails(parentCommit, headCommit, branch string) *PRDetails {
+	return &PRDetails{
+		Number:               0,
+		HeadBranch:           branch,
+		BaseBranch:           branch,
+		RootBranch:           branch,
+		Merged:               true,
+		MergeCommit:          headCommit,
+		HeadCommit:           headCommit,
+		RootCommit:           parentCommit,
+		BaseCommit:           parentCommit,
+		PotentialMergeCommit: "",
+	}
+}
+
+func (dets *PRDetails) IsSimulatedPush() bool {
+	return dets.Number == 0
 }
 
 type PRProvider interface {

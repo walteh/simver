@@ -15,7 +15,7 @@ var (
 	_ simver.TagProvider = (*gitProvider)(nil)
 )
 
-func (p *gitProvider) TagsFromCommit(ctx context.Context, commitHash string) ([]simver.TagInfo, error) {
+func (p *gitProvider) TagsFromCommit(ctx context.Context, commitHash string) (simver.Tags, error) {
 
 	ctx = zerolog.Ctx(ctx).With().Str("commit", commitHash).Logger().WithContext(ctx)
 
@@ -28,13 +28,13 @@ func (p *gitProvider) TagsFromCommit(ctx context.Context, commitHash string) ([]
 	}
 
 	lines := strings.Split(string(out), "\n")
-	var tags []simver.TagInfo
+	var tags simver.Tags
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
-		tags = append(tags, simver.TagInfo{Name: line, Ref: commitHash})
+		tags = append(tags, simver.Tag{Name: line, Ref: commitHash})
 	}
 
 	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tags)).Any("tags", tags).Msg("got tags from commit")
@@ -42,21 +42,11 @@ func (p *gitProvider) TagsFromCommit(ctx context.Context, commitHash string) ([]
 	return tags, nil
 }
 
-func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simver.TagInfo, error) {
+func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) (simver.Tags, error) {
 
 	start := time.Now()
 
 	ctx = zerolog.Ctx(ctx).With().Str("branch", branch).Logger().WithContext(ctx)
-
-	// zerolog.Ctx(ctx).Debug().Msg("getting tags from branch")
-
-	// cmd := p.git(ctx, "pull", "--ff-only", "--tags", "origin", branch)
-	// cmd.Stdout = os.Stdout
-	// cmd.Stderr = os.Stderr
-	// err := cmd.Run()
-	// if err != nil {
-	// 	return nil, ErrExecGit.Trace(err)
-	// }
 
 	cmd := p.git(ctx, "tag", "--merged", "origin/"+branch, "--format='{\"sha\":\"%(objectname)\",\"type\": \"%(objecttype)\", \"ref\": \"%(refname)\"}'")
 	out, err := cmd.Output()
@@ -66,7 +56,7 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simv
 
 	lines := strings.Split(string(out), "\n")
 
-	var tags []simver.TagInfo
+	var tags simver.Tags
 	for _, line := range lines {
 
 		if line == "" {
@@ -102,8 +92,12 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simv
 			continue
 		}
 
-		tags = append(tags, simver.TagInfo{Name: name, Ref: dat.Ref})
+		tags = append(tags, simver.Tag{Name: name, Ref: dat.Sha})
 	}
+
+	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tags)).Any("tags", tags).Dur("dur", time.Since(start)).Msg("got tags from branch")
+
+	// tags = tags.ExtractCommitRefs()
 
 	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tags)).Any("tags", tags).Dur("dur", time.Since(start)).Msg("got tags from branch")
 
@@ -111,7 +105,7 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) ([]simv
 
 }
 
-func (p *gitProvider) FetchTags(ctx context.Context) ([]simver.TagInfo, error) {
+func (p *gitProvider) FetchTags(ctx context.Context) (simver.Tags, error) {
 
 	start := time.Now()
 
@@ -135,7 +129,7 @@ func (p *gitProvider) FetchTags(ctx context.Context) ([]simver.TagInfo, error) {
 	}
 
 	lines := strings.Split(string(out), "\n")
-	var tagInfos []simver.TagInfo
+	var tagInfos simver.Tags
 	for _, line := range lines {
 		parts := strings.Split(line, " ")
 		if len(parts) != 2 {
@@ -147,41 +141,39 @@ func (p *gitProvider) FetchTags(ctx context.Context) ([]simver.TagInfo, error) {
 		if name == "" || ref == "" {
 			continue // Skip empty or invalid entries
 		}
-		tagInfos = append(tagInfos, simver.TagInfo{Name: name, Ref: ref})
+		tagInfos = append(tagInfos, simver.Tag{Name: name, Ref: ref})
 	}
+
+	// tagInfos = tagInfos.ExtractCommitRefs()
 
 	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tagInfos)).Dur("duration", time.Since(start)).Any("tags", tagInfos).Msg("tags fetched")
 
 	return tagInfos, nil
 }
 
-func (p *gitProvider) CreateTag(ctx context.Context, tag simver.TagInfo) error {
-
-	ctx = zerolog.Ctx(ctx).With().Str("name", tag.Name).Str("ref", tag.Ref).Logger().WithContext(ctx)
+func (p *gitProvider) CreateTags(ctx context.Context, tag ...simver.Tag) error {
 
 	if p.ReadOnly {
 		zerolog.Ctx(ctx).Debug().Msg("read only mode, skipping tag creation")
 		return nil
 	}
 
-	zerolog.Ctx(ctx).Debug().Msg("creating tag")
+	for _, t := range tag {
+		cmd := p.git(ctx, "tag", t.Name, t.Ref)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err := cmd.Run()
+		if err != nil {
+			return ErrExecGit.Trace(err, "name="+t.Name, "ref="+t.Ref)
+		}
+	}
 
-	cmd := p.git(ctx, "tag", tag.Name, tag.Ref)
+	cmd := p.git(ctx, "push", "origin", "--tags")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		return ErrExecGit.Trace(err, "name="+tag.Name, "ref="+tag.Ref)
-	}
-
-	zerolog.Ctx(ctx).Debug().Msg("pushing tag")
-
-	cmd = p.git(ctx, "push", "origin", tag.Name)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err = cmd.Run()
-	if err != nil {
-		return ErrExecGit.Trace(err, "name="+tag.Name, "ref="+tag.Ref)
+		return ErrExecGit.Trace(err)
 	}
 
 	zerolog.Ctx(ctx).Debug().Msg("tag created")

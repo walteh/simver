@@ -1,22 +1,60 @@
 package simver
 
 import (
-	"errors"
-	"regexp"
-	"sort"
+	"context"
+	"slices"
 	"strings"
 
+	"github.com/rs/zerolog"
 	"golang.org/x/mod/semver"
 )
 
-type TagInfo struct {
+type TagProvider interface {
+	FetchTags(ctx context.Context) (Tags, error)
+	CreateTags(ctx context.Context, tag ...Tag) error
+	TagsFromCommit(ctx context.Context, commitHash string) (Tags, error)
+	TagsFromBranch(ctx context.Context, branch string) (Tags, error)
+}
+
+type Tag struct {
 	Name string
 	Ref  string
 }
 
-type Tags []TagInfo
+var _ zerolog.LogArrayMarshaler = (*Tags)(nil)
 
-func (t Tags) GetReserved() (TagInfo, bool) {
+type Tags []Tag
+
+func shortRef(ref string) string {
+	if len(ref) <= 11 {
+		return ref
+	}
+
+	return ref[:4] + "..." + ref[len(ref)-4:]
+}
+
+func (t Tags) Sort() Tags {
+	tags := make(Tags, len(t))
+	copy(tags, t)
+
+	slices.SortFunc(tags, func(a, b Tag) int {
+		return semver.Compare(a.Name, b.Name)
+	})
+
+	return tags
+}
+
+// MarshalZerologArray implements zerolog.LogArrayMarshaler.
+func (t Tags) MarshalZerologArray(a *zerolog.Array) {
+
+	tr := t.Sort()
+
+	for _, tag := range tr {
+		a.Str(shortRef(tag.Ref) + " => " + tag.Name)
+	}
+}
+
+func (t Tags) GetReserved() (Tag, bool) {
 
 	for _, tag := range t {
 		if strings.Contains(tag.Name, "-reserved") {
@@ -24,31 +62,55 @@ func (t Tags) GetReserved() (TagInfo, bool) {
 		}
 	}
 
-	return TagInfo{}, false
+	return Tag{}, false
 }
 
-// HighestSemverContainingString finds the highest semantic version tag that contains the specified string.
-func (t Tags) HighestSemverMatching(matcher ...*regexp.Regexp) (string, error) {
+func (t Tags) Names() []string {
+	var names []string
+
+	for _, tag := range t {
+		names = append(names, tag.Name)
+	}
+
+	return names
+}
+
+func (t Tags) SemversMatching(matcher func(string) bool) []string {
 	var versions []string
 
-	for _, m := range matcher {
-		for _, tag := range t {
-			if m.MatchString(tag.Name) {
-				// Attempt to parse the semantic version from the tag
-				v := semver.Canonical(tag.Name)
-				if v != "" && semver.IsValid(v) {
-					versions = append(versions, tag.Name)
-				}
+	for _, tag := range t {
+		if matcher(tag.Name) {
+			// Attempt to parse the semantic version from the tag
+			v := semver.Canonical(tag.Name)
+			if v != "" && semver.IsValid(v) {
+				versions = append(versions, tag.Name)
 			}
 		}
-		if len(versions) == 0 {
-			return "", errors.New("no matching semantic versions found")
+	}
+
+	semver.Sort(versions)
+
+	return versions
+}
+
+func (t Tags) ExtractCommitRefs() Tags {
+	var tags Tags
+
+	for _, tag := range t {
+		if len(tag.Ref) == 40 {
+			tags = append(tags, tag)
 		}
 	}
-	// Use sort to find the highest version
-	sort.Slice(versions, func(i, j int) bool {
-		return semver.Compare(versions[i], versions[j]) < 0
-	})
 
-	return versions[len(versions)-1], nil
+	return tags
+}
+
+func (t Tags) MappedByName() map[string]string {
+	m := make(map[string]string)
+
+	for _, tag := range t {
+		m[tag.Name] = tag.Ref
+	}
+
+	return m
 }
