@@ -6,4 +6,5 @@ type GitProvider interface {
 	GetHeadRef(ctx context.Context) (string, error)
 	CommitFromRef(ctx context.Context, ref string) (string, error)
 	Branch(ctx context.Context) (string, error)
+	RepoName(ctx context.Context) (string, string, error)
 }

@@ -24,6 +24,8 @@ type gitProvider struct {
 	TokenEnvName  string
 	GitExecutable string
 	ReadOnly      bool
+	Org           string
+	Repo          string
 }
 
 type GitProviderOpts struct {
@@ -34,31 +36,37 @@ type GitProviderOpts struct {
 	TokenEnvName  string
 	GitExecutable string
 	ReadOnly      bool
+	Org           string
+	Repo          string
 }
 
-func NewLocalReadOnlyGitProvider(executable string, repoPath string) (simver.GitProvider, error) {
-	return &gitProvider{
-		RepoPath:      repoPath,
-		Token:         "",
-		TokenEnvName:  "",
-		User:          "",
-		Email:         "",
-		GitExecutable: executable,
-		ReadOnly:      true,
-	}, nil
+func (p *gitProvider) RepoName(_ context.Context) (string, string, error) {
+	return p.Org, p.Repo, nil
 }
 
-func NewLocalReadOnlyTagProvider(executable string, repoPath string) (simver.TagProvider, error) {
-	return &gitProvider{
-		RepoPath:      repoPath,
-		Token:         "",
-		TokenEnvName:  "",
-		User:          "",
-		Email:         "",
-		GitExecutable: executable,
-		ReadOnly:      true,
-	}, nil
-}
+// func NewLocalReadOnlyGitProvider(executable string, repoPath string) (simver.GitProvider, error) {
+// 	return &gitProvider{
+// 		RepoPath:      repoPath,
+// 		Token:         "",
+// 		TokenEnvName:  "",
+// 		User:          "",
+// 		Email:         "",
+// 		GitExecutable: executable,
+// 		ReadOnly:      true,
+// 	}, nil
+// }
+
+// func NewLocalReadOnlyTagProvider(executable string, repoPath string) (simver.TagProvider, error) {
+// 	return &gitProvider{
+// 		RepoPath:      repoPath,
+// 		Token:         "",
+// 		TokenEnvName:  "",
+// 		User:          "",
+// 		Email:         "",
+// 		GitExecutable: executable,
+// 		ReadOnly:      true,
+// 	}, nil
+// }
 
 func NewGitProvider(opts *GitProviderOpts) (*gitProvider, error) {
 	if opts.RepoPath == "" {
@@ -85,6 +93,14 @@ func NewGitProvider(opts *GitProviderOpts) (*gitProvider, error) {
 		opts.GitExecutable = "git"
 	}
 
+	if opts.Org == "" {
+		return nil, ErrExecGit.Trace("org is required")
+	}
+
+	if opts.Repo == "" {
+		return nil, ErrExecGit.Trace("repo is required")
+	}
+
 	// check if git is in PATH
 	_, err := exec.LookPath("git")
 	if err != nil {
@@ -99,6 +115,8 @@ func NewGitProvider(opts *GitProviderOpts) (*gitProvider, error) {
 		TokenEnvName:  opts.TokenEnvName,
 		GitExecutable: opts.GitExecutable,
 		ReadOnly:      opts.ReadOnly,
+		Org:           opts.Org,
+		Repo:          opts.Repo,
 	}, nil
 }
 

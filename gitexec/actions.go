@@ -34,6 +34,8 @@ func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagProvider, simv
 		TokenEnvName:  "GITHUB_TOKEN",
 		GitExecutable: "git",
 		ReadOnly:      readOnly == "true" || readOnly == "1",
+		Org:           org,
+		Repo:          repo,
 	}
 
 	pr := &GHProvierOpts{
@@ -54,7 +56,7 @@ func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagProvider, simv
 		return nil, nil, nil, nil, nil, Err.Trace(err, "error creating gh provider")
 	}
 
-	gha, err := NewGitProviderGithubActions(git)
+	gha, err := WrapGitProviderInGithubActions(git)
 	if err != nil {
 		return nil, nil, nil, nil, nil, Err.Trace(err, "error creating gh provider")
 	}
@@ -133,7 +135,7 @@ type gitProviderGithubActions struct {
 
 var _ simver.GitProvider = (*gitProviderGithubActions)(nil)
 
-func NewGitProviderGithubActions(ref simver.GitProvider) (simver.GitProvider, error) {
+func WrapGitProviderInGithubActions(ref simver.GitProvider) (simver.GitProvider, error) {
 	if os.Getenv("GITHUB_ACTIONS") == "true" {
 		return &gitProviderGithubActions{
 			internal: ref,
@@ -164,4 +166,8 @@ func (me *gitProviderGithubActions) GetHeadRef(ctx context.Context) (string, err
 		return head_ref, nil
 	}
 	return os.Getenv("GITHUB_REF"), nil
+}
+
+func (me *gitProviderGithubActions) RepoName(ctx context.Context) (string, string, error) {
+	return me.internal.RepoName(ctx)
 }
