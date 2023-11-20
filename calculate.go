@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/rs/zerolog"
-	"github.com/walteh/terrors"
 	"golang.org/x/mod/semver"
 )
 
@@ -19,10 +18,6 @@ type Calculation struct {
 	ForcePatch        bool
 	Skip              bool
 }
-
-var (
-	ErrValidatingCalculation = terrors.New("ErrValidatingCalculation")
-)
 
 type CalculationOutput struct {
 	BaseTags  []string

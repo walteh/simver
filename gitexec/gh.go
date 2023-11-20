@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/go-faster/errors"
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
 )
@@ -14,7 +15,7 @@ import (
 var _ simver.PRProvider = (*ghProvider)(nil)
 
 var (
-	ErrExecGH = simver.Err.Child("ErrExecGH")
+	ErrExecGH = errors.New("simver.ErrExecGH")
 )
 
 type ghProvider struct {
@@ -35,11 +36,11 @@ type GHProvierOpts struct {
 
 func NewGHProvider(opts *GHProvierOpts) (simver.PRProvider, error) {
 	if opts.GitHubToken == "" {
-		return nil, ErrExecGH.Trace("GitHub token is required")
+		return nil, errors.Wrap(ErrExecGH, "GitHub token is required")
 	}
 
 	if opts.RepoPath == "" {
-		return nil, ErrExecGH.Trace("Repo path is required")
+		return nil, errors.Wrap(ErrExecGH, "Repo path is required")
 	}
 
 	if opts.GHExecutable == "" {
@@ -49,15 +50,15 @@ func NewGHProvider(opts *GHProvierOpts) (simver.PRProvider, error) {
 	// check if gh is in PATH
 	_, err := exec.LookPath("gh")
 	if err != nil {
-		return nil, ErrExecGH.Trace("gh executable is required")
+		return nil, errors.Wrap(ErrExecGH, "gh executable is required")
 	}
 
 	if opts.Org == "" {
-		return nil, ErrExecGH.Trace("org is required")
+		return nil, errors.Wrap(ErrExecGH, "org is required")
 	}
 
 	if opts.Repo == "" {
-		return nil, ErrExecGH.Trace("repo is required")
+		return nil, errors.Wrap(ErrExecGH, "repo is required")
 	}
 
 	return &ghProvider{
@@ -165,7 +166,7 @@ func (p *ghProvider) PRDetailsByPRNumber(ctx context.Context, prnum int) (*simve
 	cmd := p.gh(ctx, "pr", "view", fmt.Sprintf("%d", prnum), "--json", githubPRDetailsCliQuery)
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, false, ErrExecGH.Trace(err)
+		return nil, false, errors.Wrap(err, "gh pr view")
 	}
 
 	byt := append([]byte("["), out...)
@@ -183,7 +184,7 @@ func (p *ghProvider) PRDetailsByBranch(ctx context.Context, branch string) (*sim
 	cmd := p.gh(ctx, "pr", "list", "--state", "all", "--head", branch, "--json", githubPRDetailsCliQuery)
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, false, ErrExecGH.Trace(err)
+		return nil, false, errors.Wrap(err, "gh pr list")
 	}
 
 	return p.getRelevantPR(ctx, out)
@@ -199,13 +200,13 @@ func (p *ghProvider) getBaseCommit(ctx context.Context, dets *simver.PRDetails) 
 	}
 
 	if cmt == "" {
-		return "", ErrExecGH.Trace("no commit to get base commit from")
+		return "", errors.Wrap(ErrExecGH, "no commit to get base commit from")
 	}
 
 	cmd := p.gh(ctx, "api", "-H", "Accept: application/vnd.github+json", fmt.Sprintf("/repos/%s/%s/git/commits/%s", p.Org, p.Repo, cmt))
 	out, err := cmd.Output()
 	if err != nil {
-		return "", ErrExecGH.Trace(err)
+		return "", errors.Wrap(err, "gh api")
 	}
 
 	var dat struct {
@@ -216,11 +217,11 @@ func (p *ghProvider) getBaseCommit(ctx context.Context, dets *simver.PRDetails) 
 
 	err = json.Unmarshal(out, &dat)
 	if err != nil {
-		return "", ErrExecGH.Trace(err)
+		return "", errors.Wrap(err, "json unmarshal")
 	}
 
 	if len(dat.Parents) < 1 {
-		return "", ErrExecGH.Trace("no parents found")
+		return "", errors.Wrap(ErrExecGH, "no parents found")
 	}
 
 	return dat.Parents[0].Sha, nil
@@ -232,7 +233,7 @@ func (p *ghProvider) getRootCommit(ctx context.Context) (string, error) {
 	cmd := p.gh(ctx, "api", "-H", "Accept: application/vnd.github+json", fmt.Sprintf("/repos/%s/%s/git/ref/heads/main", p.Org, p.Repo))
 	out, err := cmd.Output()
 	if err != nil {
-		return "", ErrExecGH.Trace(err)
+		return "", errors.Wrap(err, "gh api")
 	}
 
 	var dat struct {
@@ -243,11 +244,11 @@ func (p *ghProvider) getRootCommit(ctx context.Context) (string, error) {
 
 	err = json.Unmarshal(out, &dat)
 	if err != nil {
-		return "", ErrExecGH.Trace(err)
+		return "", errors.Wrap(err, "json unmarshal")
 	}
 
 	if dat.Object.Sha == "" {
-		return "", ErrExecGH.Trace("no sha found")
+		return "", errors.Wrap(ErrExecGH, "no sha found")
 	}
 
 	return dat.Object.Sha, nil
@@ -264,7 +265,7 @@ func (p *ghProvider) PRDetailsByCommit(ctx context.Context, commitHash string) (
 	cmd := p.gh(ctx, "pr", "list", "--search", commitHash, "--state", "all", "--json", githubPRDetailsCliQuery)
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, false, ErrExecGH.Trace(err)
+		return nil, false, errors.Wrap(err, "gh pr list")
 	}
 
 	return p.getRelevantPR(ctx, out)

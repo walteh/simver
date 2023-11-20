@@ -2,82 +2,84 @@ package simver
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 
 	"github.com/rs/zerolog"
 )
 
-var _ Execution = &rawExecution{}
-var _ RefProvider = &rawExecution{}
+var _ Execution = &ActiveProjectState{}
+var _ RefProvider = &ActiveProjectState{}
 
-type rawExecution struct {
-	pr              *PRDetails
-	baseBranch      string
-	headBranch      string
-	rootBranch      string
-	headCommit      string
-	baseCommit      string
-	rootCommit      string
-	mergeCommit     string
-	rootBranchTags  Tags
-	rootCommitTags  Tags
-	headCommitTags  Tags
-	baseCommitTags  Tags
-	baseBranchTags  Tags
-	headBranchTags  Tags
-	isMerged        bool
-	isTargetingRoot bool
+type ActiveProjectState struct {
+	CurrentPR             *PRDetails
+	CurrentBaseBranch     string
+	CurrentHeadBranch     string
+	CurrentRootBranch     string
+	CurrentHeadCommit     string
+	CurrentBaseCommit     string
+	CurrentRootCommit     string
+	CurrentMergeCommit    string
+	CurrentRootBranchTags Tags
+	CurrentRootCommitTags Tags
+	CurrentHeadCommitTags Tags
+	CurrentBaseCommitTags Tags
+	CurrentBaseBranchTags Tags
+	CurrentHeadBranchTags Tags
+	IsMerged              bool
+	// IsTargetingRoot       bool
 }
 
-func (e *rawExecution) Head() string {
-	return e.headCommit
+func (e *ActiveProjectState) Head() string {
+	return e.CurrentHeadCommit
 }
 
-func (e *rawExecution) Base() string {
-	return e.baseCommit
+func (e *ActiveProjectState) Base() string {
+	return e.CurrentBaseCommit
 }
 
-func (e *rawExecution) Root() string {
-	return e.rootCommit
+func (e *ActiveProjectState) Root() string {
+	return e.CurrentRootCommit
 }
 
-func (e *rawExecution) Merge() string {
-	return e.mergeCommit
+func (e *ActiveProjectState) Merge() string {
+	return e.CurrentMergeCommit
 }
 
-func (e *rawExecution) ProvideRefs() RefProvider {
+func (e *ActiveProjectState) ProvideRefs() RefProvider {
 	return e
 }
 
-func (e *rawExecution) BaseBranchTags() Tags {
-	return e.baseBranchTags
+func (e *ActiveProjectState) BaseBranchTags() Tags {
+	return e.CurrentBaseBranchTags
 }
 
-func (e *rawExecution) HeadBranchTags() Tags {
-	return e.headBranchTags
+func (e *ActiveProjectState) HeadBranchTags() Tags {
+	return e.CurrentHeadBranchTags
 }
 
-func (e *rawExecution) PR() int {
-	return e.pr.Number
+func (e *ActiveProjectState) PR() int {
+	return e.CurrentPR.Number
 }
 
-func (e *rawExecution) IsMerge() bool {
-	return !e.pr.IsSimulatedPush() && e.pr.Merged
+func (e *ActiveProjectState) IsMerge() bool {
+	return !e.CurrentPR.IsSimulatedPush() && e.CurrentPR.Merged
 }
 
-func (e *rawExecution) RootBranch() string {
-	return e.rootBranch
+func (e *ActiveProjectState) RootBranch() string {
+	return e.CurrentRootBranch
 }
 
-func (e *rawExecution) RootBranchTags() Tags {
-	return e.rootBranchTags
+func (e *ActiveProjectState) RootBranchTags() Tags {
+	return e.CurrentRootBranchTags
 }
 
-func (e *rawExecution) IsTargetingRoot() bool {
-	return e.baseBranch == e.rootBranch
+func (e *ActiveProjectState) IsTargetingRoot() bool {
+	return e.CurrentBaseBranch == e.CurrentRootBranch
 }
 
-func (e *rawExecution) HeadCommitTags() Tags {
-	return e.headCommitTags
+func (e *ActiveProjectState) HeadCommitTags() Tags {
+	return e.CurrentHeadCommitTags
 }
 
 func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Execution, *PRDetails, error) {
@@ -132,31 +134,74 @@ func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Exec
 		return nil, nil, err
 	}
 
+	ex := &ActiveProjectState{
+		CurrentPR:             pr,
+		CurrentBaseBranch:     pr.BaseBranch,
+		CurrentHeadBranch:     pr.BaseBranch,
+		CurrentHeadCommit:     pr.HeadCommit,
+		CurrentBaseCommit:     pr.BaseCommit,
+		CurrentHeadCommitTags: headTags,
+		CurrentBaseCommitTags: baseCommitTags,
+		CurrentBaseBranchTags: baseBranchTags,
+		CurrentHeadBranchTags: headBranchTags,
+		CurrentRootBranch:     pr.RootBranch,
+		CurrentRootCommit:     pr.RootCommit,
+		CurrentRootBranchTags: rootBranchTags,
+		CurrentRootCommitTags: rootCommitTags,
+		CurrentMergeCommit:    pr.MergeCommit,
+	}
+
 	zerolog.Ctx(ctx).Debug().
-		Array("baseCommitTags", baseCommitTags).
-		Array("baseBranchTags", baseBranchTags).
-		Array("rootCommitTags", rootCommitTags).
-		Array("rootBranchTags", rootBranchTags).
-		Array("headTags", headTags).
-		Array("headBranchTags", headBranchTags).
-		Any("pr", pr).
+		Str("CurrentBaseBranch", ex.CurrentBaseBranch).
+		Str("CurrentHeadBranch", ex.CurrentHeadBranch).
+		Str("CurrentRootBranch", ex.CurrentRootBranch).
+		Str("CurrentHeadCommit", ex.CurrentHeadCommit).
+		Str("CurrentBaseCommit", ex.CurrentBaseCommit).
+		Str("CurrentRootCommit", ex.CurrentRootCommit).
+		Str("CurrentMergeCommit", ex.CurrentMergeCommit).
+		Array("CurrentRootBranchTags", ex.CurrentRootBranchTags).
+		Array("CurrentRootCommitTags", ex.CurrentRootCommitTags).
+		Array("CurrentHeadCommitTags", ex.CurrentHeadCommitTags).
+		Array("CurrentBaseCommitTags", ex.CurrentBaseCommitTags).
+		Array("CurrentBaseBranchTags", ex.CurrentBaseBranchTags).
+		Array("CurrentHeadBranchTags", ex.CurrentHeadBranchTags).
+		Bool("IsMerged", ex.IsMerged).
+		Bool("IsTargetingRoot", ex.IsTargetingRoot()).
 		Msg("loaded tags")
 
-	return &rawExecution{
-		pr:             pr,
-		baseBranch:     pr.BaseBranch,
-		headBranch:     pr.BaseBranch,
-		headCommit:     pr.HeadCommit,
-		baseCommit:     pr.BaseCommit,
-		headCommitTags: headTags,
-		baseCommitTags: baseCommitTags,
-		baseBranchTags: baseBranchTags,
-		headBranchTags: headBranchTags,
-		rootBranch:     pr.RootBranch,
-		rootCommit:     pr.RootCommit,
-		rootBranchTags: rootBranchTags,
-		rootCommitTags: rootCommitTags,
-		mergeCommit:    pr.MergeCommit,
-	}, pr, nil
+	return ex, pr, nil
 
 }
+
+func ExecutionAsString(ctx context.Context, e Execution) (string, error) {
+	if ex, ok := e.(*ActiveProjectState); ok {
+
+		jsn, err := json.Marshal(ex)
+		if err != nil {
+			return "", err
+		}
+
+		return string(jsn), nil
+	}
+
+	return "", errors.New("execution is not an ActiveProjectState")
+}
+
+// func LoadActiveProjectStateFromCache(ctx context.Context) (*ActiveProjectState, bool, error) {
+// 	jsn, err := afero.ReadFile(fls, "simver.json")
+// 	if err != nil {
+// 		if !os.IsNotExist(err) {
+// 			return nil, false, err
+// 		}
+// 		return nil, false, nil
+// 	}
+
+// 	var e ActiveProjectState
+// 	err = json.Unmarshal(jsn, &e)
+// 	if err != nil {
+// 		return nil, false, err
+// 	}
+
+// 	return &e, true, nil
+
+// }

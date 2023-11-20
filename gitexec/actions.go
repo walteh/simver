@@ -2,17 +2,12 @@ package gitexec
 
 import (
 	"context"
-	"errors"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/go-faster/errors"
 	"github.com/walteh/simver"
-	"github.com/walteh/terrors"
-)
-
-var (
-	Err = terrors.New("ErrExecGitHubActions")
 )
 
 func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagProvider, simver.TagWriter, simver.PRProvider, simver.PRResolver, error) {
@@ -48,17 +43,17 @@ func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagProvider, simv
 
 	git, err := NewGitProvider(c)
 	if err != nil {
-		return nil, nil, nil, nil, nil, Err.Trace(err, "error creating git provider")
+		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating git provider")
 	}
 
 	gh, err := NewGHProvider(pr)
 	if err != nil {
-		return nil, nil, nil, nil, nil, Err.Trace(err, "error creating gh provider")
+		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating gh provider")
 	}
 
 	gha, err := WrapGitProviderInGithubActions(git)
 	if err != nil {
-		return nil, nil, nil, nil, nil, Err.Trace(err, "error creating gh provider")
+		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating gh provider")
 	}
 
 	return gha, git, git, gh, &PullRequestResolver{gh, git}, nil
@@ -81,12 +76,12 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 
 		n, err := strconv.Atoi(num)
 		if err != nil {
-			return nil, Err.Trace(err, "error converting PR number to int")
+			return nil, errors.Wrap(err, "error converting PR number to int")
 		}
 
 		pr, exists, err := p.gh.PRDetailsByPRNumber(ctx, n)
 		if err != nil {
-			return nil, Err.Trace(err, "error getting PR details by PR number")
+			return nil, errors.Wrap(err, "error getting PR details by PR number")
 		}
 
 		if !exists {
@@ -106,7 +101,7 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 
 	pr, exists, err := p.gh.PRDetailsByCommit(ctx, sha)
 	if err != nil {
-		return nil, Err.Trace(err, "error getting PR details by commit")
+		return nil, errors.Wrap(err, "error getting PR details by commit")
 	}
 
 	if exists {
@@ -122,7 +117,7 @@ func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails,
 	// get the parent commit
 	parent, err := p.git.CommitFromRef(ctx, "HEAD^")
 	if err != nil {
-		return nil, Err.Trace(err, "error getting parent commit")
+		return nil, errors.Wrap(err, "error getting parent commit")
 	}
 
 	return simver.NewPushSimulatedPRDetails(parent, sha, branch), nil

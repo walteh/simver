@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-faster/errors"
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
 )
@@ -25,7 +26,7 @@ func (p *gitProvider) TagsFromCommit(ctx context.Context, commitHash string) (si
 	cmd := p.git(ctx, "tag", "--points-at", commitHash)
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, ErrExecGit.Trace(err)
+		return nil, errors.Wrap(err, "git tag --points-at "+commitHash)
 	}
 
 	lines := strings.Split(string(out), "\n")
@@ -52,7 +53,7 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) (simver
 	cmd := p.git(ctx, "tag", "--merged", "origin/"+branch, "--format='{\"sha\":\"%(objectname)\",\"type\": \"%(objecttype)\", \"ref\": \"%(refname)\"}'")
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, ErrExecGit.Trace(err)
+		return nil, errors.Wrap(err, "git tag --merged origin/"+branch)
 	}
 
 	lines := strings.Split(string(out), "\n")
@@ -76,7 +77,7 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) (simver
 
 		err = json.Unmarshal([]byte(line), &dat)
 		if err != nil {
-			return nil, ErrExecGit.Trace(err)
+			return nil, errors.Wrap(err, "json unmarshal")
 		}
 
 		if dat.Type != "commit" {
@@ -117,7 +118,7 @@ func (p *gitProvider) FetchTags(ctx context.Context) (simver.Tags, error) {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		return nil, ErrExecGit.Trace(err)
+		return nil, errors.Wrap(err, "git fetch --tags")
 	}
 
 	zerolog.Ctx(ctx).Debug().Msg("printing tags")
@@ -126,7 +127,7 @@ func (p *gitProvider) FetchTags(ctx context.Context) (simver.Tags, error) {
 	cmd = p.git(ctx, "show-ref", "--tags")
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, ErrExecGit.Trace(err)
+		return nil, errors.Wrap(err, "git show-ref --tags")
 	}
 
 	lines := strings.Split(string(out), "\n")
@@ -165,7 +166,7 @@ func (p *gitProvider) CreateTags(ctx context.Context, tag ...simver.Tag) error {
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
 		if err != nil {
-			return ErrExecGit.Trace(err, "name="+t.Name, "ref="+t.Ref)
+			return errors.Wrap(err, "git tag "+t.Name+" "+t.Ref)
 		}
 	}
 
@@ -174,7 +175,7 @@ func (p *gitProvider) CreateTags(ctx context.Context, tag ...simver.Tag) error {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		return ErrExecGit.Trace(err)
+		return errors.Wrap(err, "git push origin --tags")
 	}
 
 	zerolog.Ctx(ctx).Debug().Msg("tag created")

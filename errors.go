@@ -1,9 +1,7 @@
 package simver
 
-import (
-	"github.com/walteh/terrors"
-)
+import "errors"
 
 var (
-	Err = terrors.New("simver.Err")
+	Err = errors.New("simver.Err")
 )

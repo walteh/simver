@@ -6,12 +6,13 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/go-faster/errors"
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
 )
 
 var (
-	ErrExecGit = simver.Err.Child("ErrExecGit")
+	ErrExecGit = errors.New("simver.ErrExecGit")
 )
 
 var _ simver.GitProvider = (*gitProvider)(nil)
@@ -70,23 +71,23 @@ func (p *gitProvider) RepoName(_ context.Context) (string, string, error) {
 
 func NewGitProvider(opts *GitProviderOpts) (*gitProvider, error) {
 	if opts.RepoPath == "" {
-		return nil, ErrExecGit.Trace("repo path is required")
+		return nil, errors.Wrap(ErrExecGit, "repo path is required")
 	}
 
-	if opts.Token == "" {
-		return nil, ErrExecGit.Trace("token is required")
+	if !opts.ReadOnly && opts.Token == "" {
+		return nil, errors.Wrap(ErrExecGit, "token is required for read/write")
 	}
 
 	if opts.User == "" {
-		return nil, ErrExecGit.Trace("user is required")
+		return nil, errors.Wrap(ErrExecGit, "user is required")
 	}
 
 	if opts.Email == "" {
-		return nil, ErrExecGit.Trace("email is required")
+		return nil, errors.Wrap(ErrExecGit, "email is required")
 	}
 
 	if opts.TokenEnvName == "" {
-		return nil, ErrExecGit.Trace("token env name is required")
+		return nil, errors.Wrap(ErrExecGit, "token env name is required")
 	}
 
 	if opts.GitExecutable == "" {
@@ -94,17 +95,17 @@ func NewGitProvider(opts *GitProviderOpts) (*gitProvider, error) {
 	}
 
 	if opts.Org == "" {
-		return nil, ErrExecGit.Trace("org is required")
+		return nil, errors.Wrap(ErrExecGit, "org is required")
 	}
 
 	if opts.Repo == "" {
-		return nil, ErrExecGit.Trace("repo is required")
+		return nil, errors.Wrap(ErrExecGit, "repo is required")
 	}
 
 	// check if git is in PATH
 	_, err := exec.LookPath("git")
 	if err != nil {
-		return nil, ErrExecGit.Trace("git executable is required")
+		return nil, errors.Wrap(ErrExecGit, "git executable is required")
 	}
 
 	return &gitProvider{
@@ -151,7 +152,7 @@ func (p *gitProvider) CommitFromRef(ctx context.Context, str string) (string, er
 	cmd := p.git(ctx, "rev-parse", str)
 	out, err := cmd.Output()
 	if err != nil {
-		return "", ErrExecGit.Trace(err)
+		return "", errors.Wrap(err, "git rev-parse "+str)
 	}
 
 	res := strings.TrimSpace(string(out))
@@ -168,7 +169,7 @@ func (p *gitProvider) Branch(ctx context.Context) (string, error) {
 	cmd := p.git(ctx, "branch", "--contains", "HEAD")
 	out, err := cmd.Output()
 	if err != nil {
-		return "", ErrExecGit.Trace(err)
+		return "", errors.Wrap(err, "git branch --contains HEAD")
 	}
 	lines := strings.Split(string(out), "\n")
 	res := ""
@@ -180,7 +181,7 @@ func (p *gitProvider) Branch(ctx context.Context) (string, error) {
 	}
 
 	if res == "" {
-		return "", ErrExecGit.Trace()
+		return "", errors.Wrap(ErrExecGit, "could not find current branch")
 	}
 
 	zerolog.Ctx(ctx).Debug().Str("branch", res).Msg("got branch")
@@ -196,7 +197,7 @@ func (p *gitProvider) GetHeadRef(ctx context.Context) (string, error) {
 	cmd := p.git(ctx, "rev-parse", "HEAD")
 	out, err := cmd.Output()
 	if err != nil {
-		return "", ErrExecGit.Trace(err)
+		return "", errors.Wrap(err, "git rev-parse HEAD")
 	}
 
 	res := strings.TrimSpace(string(out))
