@@ -9,16 +9,16 @@ import (
 	"github.com/walteh/simver"
 )
 
-func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagProvider, simver.TagWriter, simver.PRProvider, simver.PRResolver, error) {
+func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagProvider, simver.TagWriter, simver.PRResolver, error) {
 
-	repoData, err := fls.Open("/.git/config")
+	repoData, err := fls.Open(".git/config")
 	if err != nil {
-		return nil, nil, nil, nil, nil, errors.Wrap(err, "error opening /.git/config")
+		return nil, nil, nil, nil, errors.Wrap(err, "error opening /.git/config")
 	}
 
 	repoConfig, err := afero.ReadAll(repoData)
 	if err != nil {
-		return nil, nil, nil, nil, nil, errors.Wrap(err, "error reading /.git/config")
+		return nil, nil, nil, nil, errors.Wrap(err, "error reading /.git/config")
 	}
 
 	// split the config file into lines
@@ -35,7 +35,7 @@ func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagProvider, 
 	}
 
 	if len(remoteOrigin) == 0 {
-		return nil, nil, nil, nil, nil, errors.New("could not find remote origin in /.git/config")
+		return nil, nil, nil, nil, errors.New("could not find remote origin in /.git/config")
 	}
 
 	// find the url line
@@ -48,7 +48,7 @@ func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagProvider, 
 	}
 
 	if urlLine == "" {
-		return nil, nil, nil, nil, nil, errors.New("could not find url line in remote origin in /.git/config")
+		return nil, nil, nil, nil, errors.New("could not find url line in remote origin in /.git/config")
 	}
 
 	// grab the url
@@ -65,7 +65,7 @@ func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagProvider, 
 	if bp, ok := fls.(*afero.BasePathFs); ok {
 		path, err = bp.RealPath("/")
 		if err != nil {
-			return nil, nil, nil, nil, nil, errors.Wrap(err, "error getting real path")
+			return nil, nil, nil, nil, errors.Wrap(err, "error getting real path")
 		}
 	} else {
 		path = "."
@@ -83,35 +83,20 @@ func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagProvider, 
 		Repo:          repo,
 	}
 
-	pr := &GHProvierOpts{
-		GitHubToken:  "invalid",
-		RepoPath:     path,
-		GHExecutable: "gh",
-		Org:          org,
-		Repo:         repo,
-	}
-
 	git, err := NewGitProvider(c)
 	if err != nil {
-		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating git provider")
-	}
-
-	gh, err := NewGHProvider(pr)
-	if err != nil {
-		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating gh provider")
+		return nil, nil, nil, nil, errors.Wrap(err, "error creating git provider")
 	}
 
 	gha, err := WrapGitProviderInGithubActions(git)
 	if err != nil {
-		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating gh provider")
+		return nil, nil, nil, nil, errors.Wrap(err, "error creating gh provider")
 	}
 
-	return gha, git, git, gh, &LocalPullRequestResolver{gh, git}, nil
+	return gha, git, git, &LocalPullRequestResolver{}, nil
 }
 
 type LocalPullRequestResolver struct {
-	gh  simver.PRProvider
-	git simver.GitProvider
 }
 
 func (p *LocalPullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails, error) {
