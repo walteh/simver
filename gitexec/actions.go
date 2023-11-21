@@ -56,15 +56,15 @@ func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagProvider, simv
 		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating gh provider")
 	}
 
-	return gha, git, git, gh, &PullRequestResolver{gh, git}, nil
+	return gha, git, git, gh, &GitHubActionsPullRequestResolver{gh, git}, nil
 }
 
-type PullRequestResolver struct {
+type GitHubActionsPullRequestResolver struct {
 	gh  simver.PRProvider
 	git simver.GitProvider
 }
 
-func (p *PullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails, error) {
+func (p *GitHubActionsPullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails, error) {
 
 	head_ref := os.Getenv("GITHUB_REF")
 
