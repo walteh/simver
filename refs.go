@@ -29,3 +29,23 @@ func (e *BasicRefProvider) Root() string {
 func (e *BasicRefProvider) Merge() string {
 	return e.MergeRef
 }
+
+type SingleRefProvider struct {
+	Ref string
+}
+
+func (e *SingleRefProvider) Head() string {
+	return e.Ref
+}
+
+func (e *SingleRefProvider) Base() string {
+	return e.Ref
+}
+
+func (e *SingleRefProvider) Root() string {
+	return e.Ref
+}
+
+func (e *SingleRefProvider) Merge() string {
+	return e.Ref
+}

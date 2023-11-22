@@ -45,30 +45,6 @@ func (p *gitProvider) RepoName(_ context.Context) (string, string, error) {
 	return p.Org, p.Repo, nil
 }
 
-// func NewLocalReadOnlyGitProvider(executable string, repoPath string) (simver.GitProvider, error) {
-// 	return &gitProvider{
-// 		RepoPath:      repoPath,
-// 		Token:         "",
-// 		TokenEnvName:  "",
-// 		User:          "",
-// 		Email:         "",
-// 		GitExecutable: executable,
-// 		ReadOnly:      true,
-// 	}, nil
-// }
-
-// func NewLocalReadOnlyTagProvider(executable string, repoPath string) (simver.TagProvider, error) {
-// 	return &gitProvider{
-// 		RepoPath:      repoPath,
-// 		Token:         "",
-// 		TokenEnvName:  "",
-// 		User:          "",
-// 		Email:         "",
-// 		GitExecutable: executable,
-// 		ReadOnly:      true,
-// 	}, nil
-// }
-
 func NewGitProvider(opts *GitProviderOpts) (*gitProvider, error) {
 	if opts.RepoPath == "" {
 		return nil, errors.Wrap(ErrExecGit, "repo path is required")
@@ -205,4 +181,19 @@ func (p *gitProvider) GetHeadRef(ctx context.Context) (string, error) {
 	zerolog.Ctx(ctx).Debug().Str("ref", res).Msg("got head ref")
 
 	return res, nil
+}
+
+func (p *gitProvider) Dirty(ctx context.Context) (bool, error) {
+
+	zerolog.Ctx(ctx).Debug().Msg("checking dirty")
+
+	cmd := p.git(ctx, "diff", "HEAD")
+	out, err := cmd.Output()
+	if err != nil {
+		return false, errors.Wrap(err, "git status --porcelain")
+	}
+
+	res := strings.TrimSpace(string(out))
+
+	return res != "", nil
 }

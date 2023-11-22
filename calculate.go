@@ -12,11 +12,13 @@ type Calculation struct {
 	MyMostRecentTag   MMRT
 	MostRecentLiveTag MRLT
 	MyMostRecentBuild MMRBN
+	LastSymbolicTag   LST
 	PR                int
 	NextValidTag      NVT
 	IsMerge           bool
 	ForcePatch        bool
 	Skip              bool
+	IsDirty           bool
 }
 
 type CalculationOutput struct {

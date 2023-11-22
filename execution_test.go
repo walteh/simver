@@ -552,6 +552,8 @@ func TestNewTags(t *testing.T) {
 			mockExec.EXPECT().IsTargetingRoot().Return(tc.isTargetingRoot)
 			mockExec.EXPECT().IsMerge().Return(tc.isMerge)
 			mockExec.EXPECT().RootBranchTags().Return(tc.rootBranchTags)
+			mockExec.EXPECT().IsDirty().Return(false)
+			mockExec.EXPECT().IsLocal().Return(false)
 
 			got := simver.Calculate(ctx, mockExec).
 				CalculateNewTagsRaw(ctx).
@@ -601,6 +603,72 @@ func TestTagString_BumpPatch(t *testing.T) {
 				return
 			}
 			result := simver.BumpPatch(tc.input)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestAssumedLastFullDecoratedTag(t *testing.T) {
+	testCases := []struct {
+		name     string
+		ctx      context.Context
+		pr       int
+		dirty    bool
+		local    bool
+		mmrt     simver.MMRT
+		bn       simver.MMRBN
+		expected string
+	}{
+		{
+			name:     "Local Execution",
+			ctx:      context.Background(),
+			pr:       0,
+			dirty:    false,
+			local:    true,
+			mmrt:     "v1.2.3",
+			bn:       100,
+			expected: "v1.2.3-local+100.ahead",
+		},
+		{
+			name:     "PR Execution",
+			ctx:      context.Background(),
+			pr:       42,
+			dirty:    false,
+			local:    false,
+			mmrt:     "v1.2.3",
+			bn:       100,
+			expected: "v1.2.3-pr42+100.ahead",
+		},
+		{
+			name:     "Dirty Execution",
+			ctx:      context.Background(),
+			pr:       0,
+			dirty:    true,
+			local:    false,
+			mmrt:     "v1.2.3",
+			bn:       100,
+			expected: "v1.2.3-pr0+100.dirty",
+		},
+		{
+			name:     "Clean Execution",
+			ctx:      context.Background(),
+			pr:       0,
+			dirty:    false,
+			local:    false,
+			mmrt:     "v1.2.3",
+			bn:       100,
+			expected: "v1.2.3-pr0+100.ahead",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockExec := new(mockery.MockExecution_simver)
+			mockExec.EXPECT().IsDirty().Return(tc.dirty)
+			mockExec.EXPECT().IsLocal().Return(tc.local)
+			mockExec.EXPECT().PR().Return(tc.pr)
+
+			result := simver.LastSymbolicTag(tc.ctx, mockExec, tc.mmrt, tc.bn)
 			assert.Equal(t, tc.expected, result)
 		})
 	}

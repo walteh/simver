@@ -22,6 +22,8 @@ type Execution interface {
 	BaseBranchTags() Tags
 	RootBranchTags() Tags
 	ProvideRefs() RefProvider
+	IsDirty() bool
+	IsLocal() bool
 }
 
 const baseTag = "v0.1.0"
@@ -35,15 +37,19 @@ func Calculate(ctx context.Context, ex Execution) *Calculation {
 
 	maxlr := MaxLiveOrReservedTag(mrlt, mrrt)
 
+	mmrbn := MyMostRecentBuildNumber(ex)
+
 	return &Calculation{
+		IsDirty:           ex.IsDirty(),
 		IsMerge:           ex.IsMerge(),
 		MostRecentLiveTag: mrlt,
 		ForcePatch:        ForcePatch(ctx, ex, mmrt),
 		Skip:              Skip(ctx, ex, mmrt),
 		MyMostRecentTag:   mmrt,
-		MyMostRecentBuild: MyMostRecentBuildNumber(ex),
+		MyMostRecentBuild: mmrbn,
 		PR:                ex.PR(),
 		NextValidTag:      GetNextValidTag(ctx, ex.IsTargetingRoot(), maxlr),
+		LastSymbolicTag:   LST(LastSymbolicTag(ctx, ex, mmrt, mmrbn)),
 	}
 }
 
@@ -57,6 +63,8 @@ type MRT string  // my reserved tag
 type MAXLR string // max live or reserved tag
 
 type MAXMR string // max my reserved tag
+
+type LST string // assumed last full decorated tag
 
 func MaxLiveOrReservedTag(mrlt MRLT, mrrt MRRT) MAXLR {
 	return MAXLR(Max(mrlt, mrrt))
@@ -255,4 +263,27 @@ func GetNextValidTag(ctx context.Context, minor bool, maxt MAXLR) NVT {
 
 	return NVT(fmt.Sprintf("%s.%d.%d", semver.Major(max), minornum, patchnum))
 
+}
+
+func LastSymbolicTag(ctx context.Context, ex Execution, mmrt MMRT, bn MMRBN) string {
+
+	lt := string(mmrt)
+
+	lt = semver.Canonical(lt)
+
+	if ex.IsLocal() {
+		lt += "-local"
+	} else {
+		lt += fmt.Sprintf("-pr%d", ex.PR())
+	}
+
+	lt += fmt.Sprintf("+%d", bn)
+
+	if ex.IsDirty() {
+		lt += ".dirty"
+	} else {
+		lt += ".ahead"
+	}
+
+	return lt
 }

@@ -26,7 +26,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ee, _, err := simver.LoadExecution(ctx, tagreader, prr)
+	ee, _, err := simver.LoadExecutionFromPR(ctx, tagreader, prr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution")
 		fmt.Println(terrors.FormatErrorCaller(err))

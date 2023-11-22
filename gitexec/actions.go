@@ -166,3 +166,7 @@ func (me *gitProviderGithubActions) GetHeadRef(ctx context.Context) (string, err
 func (me *gitProviderGithubActions) RepoName(ctx context.Context) (string, string, error) {
 	return me.internal.RepoName(ctx)
 }
+
+func (me *gitProviderGithubActions) Dirty(ctx context.Context) (bool, error) {
+	return me.internal.Dirty(ctx)
+}

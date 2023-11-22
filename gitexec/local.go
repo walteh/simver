@@ -92,19 +92,26 @@ func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagReader, si
 }
 
 type LocalPullRequestResolver struct {
+	git simver.GitProvider
 }
 
 func (p *LocalPullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails, error) {
+
+	cmt, err := p.git.GetHeadRef(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "error getting head ref")
+	}
+
 	return &simver.PRDetails{
 		Number:               1,
 		HeadBranch:           "local",
 		BaseBranch:           "local",
 		RootBranch:           "local",
 		Merged:               false,
-		MergeCommit:          "",
-		HeadCommit:           "",
-		PotentialMergeCommit: "",
-		BaseCommit:           "",
-		RootCommit:           "",
+		MergeCommit:          cmt,
+		HeadCommit:           cmt,
+		PotentialMergeCommit: cmt,
+		BaseCommit:           cmt,
+		RootCommit:           cmt,
 	}, nil
 }
