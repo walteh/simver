@@ -88,12 +88,7 @@ func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagProvider, 
 		return nil, nil, nil, nil, errors.Wrap(err, "error creating git provider")
 	}
 
-	gha, err := WrapGitProviderInGithubActions(git)
-	if err != nil {
-		return nil, nil, nil, nil, errors.Wrap(err, "error creating gh provider")
-	}
-
-	return gha, git, git, &LocalPullRequestResolver{}, nil
+	return git, git, git, &LocalPullRequestResolver{}, nil
 }
 
 type LocalPullRequestResolver struct {
