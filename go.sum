@@ -161,8 +161,8 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/stretchr/testify v1.8.4 h1:CcVxjf3Q8PM0mHUKJCdn+eZZtm5yQwehR5yeSVQQcUk=
 github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXlSw2iwfAo=
-github.com/walteh/snake v0.0.0-simver-test-b h1:tDW9kgZEFv9IpH9TKVHl0q0extqLf1iTzQwE6S+knWg=
-github.com/walteh/snake v0.0.0-simver-test-b/go.mod h1:2CyOw00AbrujT3hhI0CPQWQnYP/9NF9s9y3HmTQtDDs=
+github.com/walteh/snake v0.25.0 h1:NdrmTpgclunv5uOUSsU3oyxXZ+LVgKRIz69syhWLwag=
+github.com/walteh/snake v0.25.0/go.mod h1:2CyOw00AbrujT3hhI0CPQWQnYP/9NF9s9y3HmTQtDDs=
 github.com/walteh/terrors v0.2.6 h1:bluJszqQIEVldxU4Ur9GaOLEaVKLdWwuFW8dwKRzHhw=
 github.com/walteh/terrors v0.2.6/go.mod h1:txmqqCK7EbLSUFRXzsRDR8b9oDMX6aywzRSGKiQOdEQ=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=

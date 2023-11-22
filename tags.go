@@ -9,14 +9,14 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-type TagProvider interface {
-	FetchTags(ctx context.Context) (Tags, error)
+type TagReader interface {
 	TagsFromCommit(ctx context.Context, commitHash string) (Tags, error)
 	TagsFromBranch(ctx context.Context, branch string) (Tags, error)
 }
 
 type TagWriter interface {
 	CreateTags(ctx context.Context, tag ...Tag) error
+	FetchTags(ctx context.Context) (Tags, error)
 }
 
 type Tag struct {

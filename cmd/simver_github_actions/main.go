@@ -16,7 +16,7 @@ func main() {
 
 	ctx := context.Background()
 
-	ctx = szl.NewVerboseLoggerContext(ctx)
+	ctx = szl.NewVerboseConsoleLogger().WithContext(ctx)
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 

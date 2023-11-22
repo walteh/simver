@@ -7,7 +7,7 @@ require (
 	github.com/rs/zerolog v1.31.0
 	github.com/spf13/afero v1.10.0
 	github.com/stretchr/testify v1.8.4
-	github.com/walteh/snake v0.0.0-simver-test-b
+	github.com/walteh/snake v0.25.0
 	github.com/walteh/terrors v0.2.6
 	golang.org/x/mod v0.14.0
 )

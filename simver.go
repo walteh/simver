@@ -82,14 +82,9 @@ func (e *ActiveProjectState) HeadCommitTags() Tags {
 	return e.CurrentHeadCommitTags
 }
 
-func LoadExecution(ctx context.Context, tprov TagProvider, prr PRResolver) (Execution, *PRDetails, error) {
+func LoadExecution(ctx context.Context, tprov TagReader, prr PRResolver) (Execution, *PRDetails, error) {
 
 	pr, err := prr.CurrentPR(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	_, err = tprov.FetchTags(ctx)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/walteh/simver"
 )
 
-func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagProvider, simver.TagWriter, simver.PRResolver, error) {
+func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagReader, simver.TagWriter, simver.PRResolver, error) {
 
 	repoData, err := fls.Open(".git/config")
 	if err != nil {

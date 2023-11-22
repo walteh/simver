@@ -10,7 +10,7 @@ import (
 	"github.com/walteh/simver"
 )
 
-func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagProvider, simver.TagWriter, simver.PRProvider, simver.PRResolver, error) {
+func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagReader, simver.TagWriter, simver.PRProvider, simver.PRResolver, error) {
 
 	token := os.Getenv("GITHUB_TOKEN")
 	repoPath := os.Getenv("GITHUB_WORKSPACE")
