@@ -10,14 +10,43 @@ import (
 	"github.com/walteh/simver"
 )
 
-func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagReader, simver.TagWriter, simver.PRProvider, simver.PRResolver, error) {
+func BuildGitHubActionsProviders(actionEnvFile string) (simver.GitProvider, simver.TagReader, simver.TagWriter, simver.PRProvider, simver.PRResolver, error) {
 
-	token := os.Getenv("GITHUB_TOKEN")
-	repoPath := os.Getenv("GITHUB_WORKSPACE")
-	readOnly := os.Getenv("SIMVER_READ_ONLY")
+	// load the env file
+	data, err := os.ReadFile(actionEnvFile)
+	if err != nil {
+		return nil, nil, nil, nil, nil, errors.Wrap(err, "error reading action env file")
+	}
 
-	org := os.Getenv("GITHUB_REPOSITORY_OWNER")
-	repo := os.Getenv("GITHUB_REPOSITORY")
+	env := map[string]string{}
+
+	// split the env file into lines
+	lines := strings.Split(string(data), "\n")
+
+	// parse the env file
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			return nil, nil, nil, nil, nil, errors.New("invalid line in action env file: " + line)
+		}
+
+		key := parts[0]
+		value := parts[1]
+
+		env[key] = value
+	}
+
+	token := env["GITHUB_TOKEN"]
+	repoPath := env["GITHUB_WORKSPACE"]
+	readOnly := env["SIMVER_READ_ONLY"]
+
+	org := env["GITHUB_REPOSITORY_OWNER"]
+	repo := env["GITHUB_REPOSITORY"]
 
 	repo = strings.TrimPrefix(repo, org+"/")
 
@@ -51,22 +80,34 @@ func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagReader, simver
 		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating gh provider")
 	}
 
-	gha, err := WrapGitProviderInGithubActions(git)
+	prr := &GitHubActionsPullRequestResolver{
+		gh:       gh,
+		git:      git,
+		SHA:      env["GITHUB_SHA"],
+		REF:      env["GITHUB_REF"],
+		HEAD_REF: env["GITHUB_HEAD_REF"],
+	}
+
+	gha, err := WrapGitProviderInGithubActions(git, prr)
 	if err != nil {
 		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating gh provider")
 	}
 
-	return gha, git, git, gh, &GitHubActionsPullRequestResolver{gh, git}, nil
+	return gha, git, git, gh, prr, nil
 }
 
 type GitHubActionsPullRequestResolver struct {
-	gh  simver.PRProvider
-	git simver.GitProvider
+	gh             simver.PRProvider
+	git            simver.GitProvider
+	REF            string
+	HEAD_REF       string
+	SHA            string
+	GITHUB_ACTIONS string
 }
 
 func (p *GitHubActionsPullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDetails, error) {
 
-	head_ref := os.Getenv("GITHUB_REF")
+	head_ref := p.HEAD_REF
 
 	if head_ref != "" && strings.HasPrefix(head_ref, "refs/pull/") {
 		// this is easy, we know that this is a pr event
@@ -97,7 +138,7 @@ func (p *GitHubActionsPullRequestResolver) CurrentPR(ctx context.Context) (*simv
 
 	branch := strings.TrimPrefix(head_ref, "refs/heads/")
 
-	sha := os.Getenv("GITHUB_SHA")
+	sha := p.SHA
 
 	pr, exists, err := p.gh.PRDetailsByCommit(ctx, sha)
 	if err != nil {
@@ -126,14 +167,16 @@ func (p *GitHubActionsPullRequestResolver) CurrentPR(ctx context.Context) (*simv
 
 type gitProviderGithubActions struct {
 	internal simver.GitProvider
+	pr       *GitHubActionsPullRequestResolver
 }
 
 var _ simver.GitProvider = (*gitProviderGithubActions)(nil)
 
-func WrapGitProviderInGithubActions(ref simver.GitProvider) (simver.GitProvider, error) {
-	if os.Getenv("GITHUB_ACTIONS") == "true" {
+func WrapGitProviderInGithubActions(ref simver.GitProvider, pr *GitHubActionsPullRequestResolver) (simver.GitProvider, error) {
+	if pr.GITHUB_ACTIONS == "true" {
 		return &gitProviderGithubActions{
 			internal: ref,
+			pr:       pr,
 		}, nil
 	} else {
 		return nil, errors.New("not running in GitHub Actions")
@@ -142,11 +185,11 @@ func WrapGitProviderInGithubActions(ref simver.GitProvider) (simver.GitProvider,
 
 // Branch implements simver.GitProvider.
 func (me *gitProviderGithubActions) Branch(ctx context.Context) (string, error) {
-	head_ref := os.Getenv("GITHUB_HEAD_REF")
+	head_ref := me.pr.HEAD_REF
 	if head_ref != "" {
 		return head_ref, nil
 	}
-	return os.Getenv("GITHUB_REF"), nil
+	return me.pr.REF, nil
 }
 
 // CommitFromRef implements simver.GitProvider.
@@ -156,11 +199,11 @@ func (me *gitProviderGithubActions) CommitFromRef(ctx context.Context, ref strin
 
 // GetHeadRef implements simver.GitProvider.
 func (me *gitProviderGithubActions) GetHeadRef(ctx context.Context) (string, error) {
-	head_ref := os.Getenv("GITHUB_HEAD_REF")
+	head_ref := me.pr.HEAD_REF
 	if head_ref != "" {
 		return head_ref, nil
 	}
-	return os.Getenv("GITHUB_REF"), nil
+	return me.pr.REF, nil
 }
 
 func (me *gitProviderGithubActions) RepoName(ctx context.Context) (string, string, error) {

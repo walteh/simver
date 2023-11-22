@@ -20,7 +20,7 @@ func main() {
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
-	_, tagreader, tagwriter, _, prr, err := gitexec.BuildGitHubActionsProviders()
+	_, tagreader, tagwriter, _, prr, err := gitexec.BuildGitHubActionsProviders(os.Getenv("GITHUB_ENV"))
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error creating provider")
 		os.Exit(1)
