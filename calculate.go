@@ -28,6 +28,17 @@ type CalculationOutput struct {
 	MergeTags []string
 }
 
+func (me *CalculationOutput) CurrentBuildTag() string {
+	if len(me.HeadTags) == 0 {
+		if len(me.MergeTags) == 0 {
+			return ""
+		} else {
+			return me.MergeTags[0]
+		}
+	}
+	return me.HeadTags[0]
+}
+
 func (out *CalculationOutput) ApplyRefs(opts RefProvider) Tags {
 	tags := make(Tags, 0)
 	for _, tag := range out.BaseTags {
