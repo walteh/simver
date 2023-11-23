@@ -37,6 +37,8 @@ func main() {
 
 	tags := tt.ApplyRefs(ee.ProvideRefs())
 
+	vers, commit := tt.CurrentBuildTag(ee.ProvideRefs())
+
 	err = tagwriter.CreateTags(ctx, tags...)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
@@ -56,7 +58,7 @@ func main() {
 
 	defer f.Close()
 
-	_, err = f.WriteString(tt.CurrentBuildTag())
+	_, err = f.WriteString(`{"tag_name":"` + vers + `","tag_sha":"` + commit + `"}`)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error writing .simver file: %v", err)
 		fmt.Println(terrors.FormatErrorCaller(err))

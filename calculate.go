@@ -28,15 +28,15 @@ type CalculationOutput struct {
 	MergeTags []string
 }
 
-func (me *CalculationOutput) CurrentBuildTag() string {
+func (me *CalculationOutput) CurrentBuildTag(opts RefProvider) (string, string) {
 	if len(me.HeadTags) == 0 {
 		if len(me.MergeTags) == 0 {
-			return ""
+			return "", ""
 		} else {
-			return me.MergeTags[0]
+			return me.MergeTags[0], opts.Merge()
 		}
 	}
-	return me.HeadTags[0]
+	return me.HeadTags[0], opts.Head()
 }
 
 func (out *CalculationOutput) ApplyRefs(opts RefProvider) Tags {
@@ -44,7 +44,6 @@ func (out *CalculationOutput) ApplyRefs(opts RefProvider) Tags {
 	for _, tag := range out.BaseTags {
 		tags = append(tags, Tag{Name: tag, Ref: opts.Base()})
 	}
-
 	for _, tag := range out.HeadTags {
 		tags = append(tags, Tag{Name: tag, Ref: opts.Head()})
 	}
