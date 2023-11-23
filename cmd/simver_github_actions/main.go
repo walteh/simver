@@ -37,31 +37,11 @@ func main() {
 
 	tags := tt.ApplyRefs(ee.ProvideRefs())
 
-	vers, commit := tt.CurrentBuildTag(ee.ProvideRefs())
-
 	err = tagwriter.CreateTags(ctx, tags...)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
 		fmt.Println(terrors.FormatErrorCaller(err))
 
-		os.Exit(1)
-	}
-
-	// save current build tag to .simver
-
-	f, err := os.Create(".simver")
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating .simver file: %v", err)
-		fmt.Println(terrors.FormatErrorCaller(err))
-		os.Exit(1)
-	}
-
-	defer f.Close()
-
-	_, err = f.WriteString(`{"tag_name":"` + vers + `","tag_sha":"` + commit + `"}`)
-	if err != nil {
-		zerolog.Ctx(ctx).Error().Err(err).Msgf("error writing .simver file: %v", err)
-		fmt.Println(terrors.FormatErrorCaller(err))
 		os.Exit(1)
 	}
 
