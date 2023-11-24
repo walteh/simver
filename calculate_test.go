@@ -22,7 +22,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild: 33,
 				PR:                85,
 				NextValidTag:      "v99.99.99",
-				IsMerge:           false,
+				IsMerged:          false,
 				ForcePatch:        false,
 			},
 			output: &simver.CalculationOutput{
@@ -46,7 +46,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild: 1,
 				PR:                1,
 				NextValidTag:      "v3.3.3",
-				IsMerge:           false,
+				IsMerged:          false,
 				ForcePatch:        false,
 			},
 
@@ -71,7 +71,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild: 33,
 				PR:                1,
 				NextValidTag:      "v1.2.6",
-				IsMerge:           false,
+				IsMerged:          false,
 				ForcePatch:        false,
 			},
 
@@ -91,7 +91,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild: 33,
 				PR:                1,
 				NextValidTag:      "v1.2.6",
-				IsMerge:           false,
+				IsMerged:          false,
 				ForcePatch:        false,
 			},
 
@@ -110,7 +110,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild: 33,
 				PR:                1,
 				NextValidTag:      "v1.2.6",
-				IsMerge:           true,
+				IsMerged:          true,
 				ForcePatch:        false,
 			},
 			output: &simver.CalculationOutput{
@@ -128,7 +128,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild: 33,
 				PR:                1,
 				NextValidTag:      "v1.2.6",
-				IsMerge:           false,
+				IsMerged:          false,
 				ForcePatch:        true,
 			},
 			output: &simver.CalculationOutput{
@@ -146,7 +146,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild: 33,
 				PR:                1,
 				NextValidTag:      "v1.2.6",
-				IsMerge:           true,
+				IsMerged:          true,
 				ForcePatch:        true,
 			},
 			output: &simver.CalculationOutput{
@@ -164,7 +164,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MyMostRecentBuild: 33,
 				PR:                85,
 				NextValidTag:      "v99.99.99",
-				IsMerge:           false,
+				IsMerged:          false,
 				ForcePatch:        true,
 			},
 			output: &simver.CalculationOutput{
@@ -179,7 +179,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			name: "expired mmrt",
 			calculation: &simver.Calculation{
 				ForcePatch:        false,
-				IsMerge:           false,
+				IsMerged:          false,
 				MostRecentLiveTag: "v0.17.2",
 				MyMostRecentBuild: 1.000000,
 				MyMostRecentTag:   "v0.17.3",
@@ -197,7 +197,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			name: "when merging a branch that already is tagged correctly, bump by patch",
 			calculation: &simver.Calculation{
 				ForcePatch:        false,
-				IsMerge:           true,
+				IsMerged:          true,
 				MostRecentLiveTag: "v0.3.0",
 				MyMostRecentBuild: 1.000000,
 				MyMostRecentTag:   "v0.3.0",
@@ -215,7 +215,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			name: "when merging a branch that already is tagged correctly, bump by patch (ignoring force patch)",
 			calculation: &simver.Calculation{
 				ForcePatch:        true,
-				IsMerge:           true,
+				IsMerged:          true,
 				MostRecentLiveTag: "v0.2.0",
 				MyMostRecentBuild: 1.000000,
 				MyMostRecentTag:   "v0.2.0",
@@ -233,7 +233,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			name: "when merging a branch that already is tagged correctly on first build, bump to next",
 			calculation: &simver.Calculation{
 				ForcePatch:        true,
-				IsMerge:           true,
+				IsMerged:          true,
 				MostRecentLiveTag: "v0.2.0",
 				MyMostRecentBuild: 0,
 				MyMostRecentTag:   "v0.2.0",
@@ -253,7 +253,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			calculation: &simver.Calculation{
 
 				ForcePatch:        true,
-				IsMerge:           false,
+				IsMerged:          false,
 				MostRecentLiveTag: "v0.4.1",
 				MyMostRecentBuild: 0.000000,
 				MyMostRecentTag:   "v0.4.1",
@@ -272,7 +272,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			name: "skip if flagged",
 			calculation: &simver.Calculation{
 				ForcePatch:        false,
-				IsMerge:           true,
+				IsMerged:          true,
 				MostRecentLiveTag: "v0.4.2",
 				MyMostRecentBuild: 3.000000,
 				MyMostRecentTag:   "v0.4.2",
@@ -291,7 +291,7 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 			name: "if is merge, build is 0, skip is false - tag mmrt",
 			calculation: &simver.Calculation{
 				ForcePatch:        false,
-				IsMerge:           true,
+				IsMerged:          true,
 				MostRecentLiveTag: "v0.18.0",
 				MyMostRecentBuild: 0.000000,
 				MyMostRecentTag:   "v0.18.1",

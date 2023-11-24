@@ -12,13 +12,11 @@ type Calculation struct {
 	MyMostRecentTag   MMRT
 	MostRecentLiveTag MRLT
 	MyMostRecentBuild MMRBN
-	LastSymbolicTag   LST
 	PR                int
 	NextValidTag      NVT
-	IsMerge           bool
+	IsMerged          bool
 	ForcePatch        bool
 	Skip              bool
-	IsDirty           bool
 }
 
 type CalculationOutput struct {
@@ -65,9 +63,7 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 	}
 
 	if me.Skip {
-		zerolog.Ctx(ctx).Debug().
-			Any("calculation", me).
-			Msg("Skipping calculation")
+		zerolog.Ctx(ctx).Debug().Any("calculation", me).Msg("Skipping calculation")
 		return out
 	}
 
@@ -95,9 +91,7 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 	if mmrt != "" && semver.Compare(mmrt, mrlt) == 0 && me.MyMostRecentBuild != 0 {
 		validMmrt = false
 		nvt = BumpPatch(mmrt)
-	}
-
-	if !me.IsMerge {
+	} else if !me.IsMerged {
 		if me.MyMostRecentBuild == 0 {
 			validMmrt = false
 		} else if me.ForcePatch {
@@ -109,14 +103,14 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 	// if mmrt is invalid, then we need to reserve a new mmrt (which is the same as nvt)
 	if !validMmrt {
 		mmrt = nvt
-		// pr will be 0 if this is not a and is a push to the root branch
-		if me.PR != 0 && !me.IsMerge {
+		// pr will be 0 if this is not merged and is a push to the root branch
+		if me.PR != 0 && !me.IsMerged {
 			out.RootTags = append(out.RootTags, mmrt+"-reserved")
 			out.BaseTags = append(out.BaseTags, mmrt+fmt.Sprintf("-pr%d+base", me.PR))
 		}
 	}
 
-	if me.IsMerge {
+	if me.IsMerged {
 		// if !matching {
 		out.MergeTags = append(out.MergeTags, mmrt)
 		// }
@@ -135,7 +129,7 @@ func (me *Calculation) CalculateNewTagsRaw(ctx context.Context) *CalculationOutp
 		Str("mrlt", mrlt).
 		Str("nvt", nvt).
 		Str("pr", fmt.Sprintf("%d", me.PR)).
-		Bool("isMerge", me.IsMerge).
+		Bool("isMerge", me.IsMerged).
 		Bool("forcePatch", me.ForcePatch).
 		Msg("CalculateNewTagsRaw")
 
