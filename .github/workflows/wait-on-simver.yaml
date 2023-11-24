@@ -25,7 +25,7 @@
                             },
                             {
                                 name: install simver,
-                                run: "go install github.com/walteh/simver/cmd/wait_on_simver_github_actions@wait-on-simver-test-b",
+                                run: "go install github.com/walteh/simver/cmd/wait_on_simver_github_actions@wait-on-simver-test-c",
                             },
                             {
                                 name: run simver,

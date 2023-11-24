@@ -111,7 +111,7 @@ func main() {
 
 				if ok {
 					zerolog.Ctx(ctx).Info().Str("name", tg.Name).Msg("tag found")
-					break
+					os.Exit(0)
 				}
 
 				zerolog.Ctx(ctx).Info().Dur("remaining", time.Until(end)).Dur("interval", interval).Msg("tag not found, waiting")
