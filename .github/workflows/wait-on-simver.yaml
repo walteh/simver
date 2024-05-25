@@ -5,7 +5,7 @@ on:
     push:
         branches: ["*"]
 jobs:
-    simver:
+    wait-on-simver:
         runs-on: ubuntu-latest
         steps:
             - uses: walteh/simver/cmd/gha-wait-on-simver@a9f89e2fb17b03b3150c2aed050a68bc85280f02
