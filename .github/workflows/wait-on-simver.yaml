@@ -1,15 +1,13 @@
-name: simver
+name: wait-on-simver
 permissions: { id-token: write, contents: write, pull-requests: read }
 on:
     workflow_dispatch:
     push:
-        branches: [main]
-    pull_request:
-        types: [opened, synchronize, reopened, closed]
+        branches: ["*"]
 jobs:
-    simver:
+    wait-on-simver:
         runs-on: ubuntu-latest
         steps:
-            - uses: walteh/simver/cmd/gha-simver@a9f89e2fb17b03b3150c2aed050a68bc85280f02
+            - uses: walteh/simver/cmd/gha-wait-on-simver@a9f89e2fb17b03b3150c2aed050a68bc85280f02
               with:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

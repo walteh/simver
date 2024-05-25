@@ -7,9 +7,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/go-faster/errors"
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
+	"gitlab.com/tozd/go/errors"
 )
 
 var _ simver.PRProvider = (*ghProvider)(nil)
@@ -166,7 +166,7 @@ func (p *ghProvider) PRDetailsByPRNumber(ctx context.Context, prnum int) (*simve
 	cmd := p.gh(ctx, "pr", "view", fmt.Sprintf("%d", prnum), "--json", githubPRDetailsCliQuery)
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, false, errors.Wrap(err, "gh pr view")
+		return nil, false, errors.Errorf("gh pr view: %w", err)
 	}
 
 	byt := append([]byte("["), out...)
@@ -184,7 +184,7 @@ func (p *ghProvider) PRDetailsByBranch(ctx context.Context, branch string) (*sim
 	cmd := p.gh(ctx, "pr", "list", "--state", "all", "--head", branch, "--json", githubPRDetailsCliQuery)
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, false, errors.Wrap(err, "gh pr list")
+		return nil, false, errors.Errorf("gh pr list: %w", err)
 	}
 
 	return p.getRelevantPR(ctx, out)
@@ -206,7 +206,7 @@ func (p *ghProvider) getBaseCommit(ctx context.Context, dets *simver.PRDetails) 
 	cmd := p.gh(ctx, "api", "-H", "Accept: application/vnd.github+json", fmt.Sprintf("/repos/%s/%s/git/commits/%s", p.Org, p.Repo, cmt))
 	out, err := cmd.Output()
 	if err != nil {
-		return "", errors.Wrap(err, "gh api")
+		return "", errors.Errorf("gh api: %w", err)
 	}
 
 	var dat struct {
@@ -217,7 +217,7 @@ func (p *ghProvider) getBaseCommit(ctx context.Context, dets *simver.PRDetails) 
 
 	err = json.Unmarshal(out, &dat)
 	if err != nil {
-		return "", errors.Wrap(err, "json unmarshal")
+		return "", errors.Errorf("json unmarshal: %w", err)
 	}
 
 	if len(dat.Parents) < 1 {
@@ -233,7 +233,7 @@ func (p *ghProvider) getRootCommit(ctx context.Context) (string, error) {
 	cmd := p.gh(ctx, "api", "-H", "Accept: application/vnd.github+json", fmt.Sprintf("/repos/%s/%s/git/ref/heads/main", p.Org, p.Repo))
 	out, err := cmd.Output()
 	if err != nil {
-		return "", errors.Wrap(err, "gh api")
+		return "", errors.Errorf("gh api: %w", err)
 	}
 
 	var dat struct {
@@ -244,7 +244,7 @@ func (p *ghProvider) getRootCommit(ctx context.Context) (string, error) {
 
 	err = json.Unmarshal(out, &dat)
 	if err != nil {
-		return "", errors.Wrap(err, "json unmarshal")
+		return "", errors.Errorf("json unmarshal: %w", err)
 	}
 
 	if dat.Object.Sha == "" {
@@ -265,7 +265,7 @@ func (p *ghProvider) PRDetailsByCommit(ctx context.Context, commitHash string) (
 	cmd := p.gh(ctx, "pr", "list", "--search", commitHash, "--state", "all", "--json", githubPRDetailsCliQuery)
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, false, errors.Wrap(err, "gh pr list")
+		return nil, false, errors.Errorf("gh pr list: %w", err)
 	}
 
 	return p.getRelevantPR(ctx, out)

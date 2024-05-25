@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/go-faster/errors"
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
+	"gitlab.com/tozd/go/errors"
 )
 
 var (
@@ -145,7 +145,7 @@ func (p *gitProvider) Branch(ctx context.Context) (string, error) {
 	cmd := p.git(ctx, "branch", "--contains", "HEAD")
 	out, err := cmd.Output()
 	if err != nil {
-		return "", errors.Wrap(err, "git branch --contains HEAD")
+		return "", errors.Errorf("git branch --contains HEAD: %w", err)
 	}
 	lines := strings.Split(string(out), "\n")
 	res := ""
@@ -173,7 +173,7 @@ func (p *gitProvider) GetHeadRef(ctx context.Context) (string, error) {
 	cmd := p.git(ctx, "rev-parse", "HEAD")
 	out, err := cmd.Output()
 	if err != nil {
-		return "", errors.Wrap(err, "git rev-parse HEAD")
+		return "", errors.Errorf("git rev-parse HEAD: %w", err)
 	}
 
 	res := strings.TrimSpace(string(out))
@@ -190,7 +190,7 @@ func (p *gitProvider) Dirty(ctx context.Context) (bool, error) {
 	cmd := p.git(ctx, "diff", "HEAD")
 	out, err := cmd.Output()
 	if err != nil {
-		return false, errors.Wrap(err, "git status --porcelain")
+		return false, errors.Errorf("git status --porcelain: %w", err)
 	}
 
 	res := strings.TrimSpace(string(out))

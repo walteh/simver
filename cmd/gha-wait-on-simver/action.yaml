@@ -1,0 +1,53 @@
+name: wait-on-simver
+description: "waits for simver, running in a seperate workflow or action, to calculate new tag"
+inputs: { GITHUB_TOKEN: { description: "GitHub token", required: true } }
+runs:
+    using: "composite"
+    steps:
+
+        - name: checkout source code
+          uses: actions/checkout@v4
+          with:
+              path: __source__
+              fetch-depth: 0
+
+        - name: get current action ref
+          id: get-action-ref
+          shell: bash
+          run: "echo '${{ github.action_path }}' | sed -n 's/.*walteh\\/simver\\///p' | sed -n 's/\\/cmd\\/gha-wait-on-simver//p' | xargs -I {} echo 'SIMVER_GITHUB_ACTION_REF={}' >> $GITHUB_ENV"
+
+        - name: checkout simver code
+          uses: actions/checkout@v4
+          with:
+              fetch-depth: 1
+              repository: walteh/simver
+              ref: ${{ env.SIMVER_GITHUB_ACTION_REF }}
+              path: __simver__
+
+        - name: get current go version from go.mod
+          id: go-version
+          shell: bash
+          working-directory: __simver__
+          run: 'cat go.mod | grep ''go '' | awk ''{print $2}'' | xargs -I {} echo "GO_VERSION={}" >> $GITHUB_ENV'
+
+        - name: setup golang
+          uses: actions/setup-go@v4
+          with:
+              go-version: ${{ env.GO_VERSION }}
+
+        - name: download dependencies
+          shell: bash
+          working-directory: __simver__
+          run: "go mod download"
+
+        - name: install simver
+          shell: bash
+          working-directory: __simver__
+          run: "go install ./cmd/gha-wait-on-simver"
+
+        - name: run simver
+          shell: bash
+          working-directory: __source__
+          env:
+              GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
+          run: "gha-wait-on-simver --read-only=false --path=."

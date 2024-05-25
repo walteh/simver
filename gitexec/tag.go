@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-faster/errors"
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
+	"gitlab.com/tozd/go/errors"
 )
 
 var (
@@ -87,7 +87,7 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) (simver
 
 		err = json.Unmarshal([]byte(line), &dat)
 		if err != nil {
-			return nil, errors.Wrap(err, "json unmarshal")
+			return nil, errors.Errorf("json unmarshal: %w", err)
 		}
 
 		if dat.Type != "commit" {
@@ -128,7 +128,7 @@ func (p *gitProvider) FetchTags(ctx context.Context) (simver.Tags, error) {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		return nil, errors.Wrap(err, "git fetch --tags")
+		return nil, errors.Errorf("git fetch --tags: %w", err)
 	}
 
 	zerolog.Ctx(ctx).Debug().Msg("printing tags")
@@ -137,7 +137,7 @@ func (p *gitProvider) FetchTags(ctx context.Context) (simver.Tags, error) {
 	cmd = p.git(ctx, "show-ref", "--tags")
 	out, err := cmd.Output()
 	if err != nil {
-		return nil, errors.Wrap(err, "git show-ref --tags")
+		return nil, errors.Errorf("git show-ref --tags: %w", err)
 	}
 
 	lines := strings.Split(string(out), "\n")
@@ -185,7 +185,7 @@ func (p *gitProvider) CreateTags(ctx context.Context, tag ...simver.Tag) error {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		return errors.Wrap(err, "git push origin --tags")
+		return errors.Errorf("git push origin --tags: %w", err)
 	}
 
 	zerolog.Ctx(ctx).Debug().Msg("tag created")

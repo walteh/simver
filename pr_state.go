@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 
 	"github.com/rs/zerolog"
 )
@@ -56,14 +57,6 @@ func (e *ActivePRProjectState) HeadCommitTags() Tags {
 	return e.CurrentHeadCommitTags
 }
 
-func (e *ActivePRProjectState) IsDirty() bool {
-	return false
-}
-
-func (e *ActivePRProjectState) IsLocal() bool {
-	return false
-}
-
 func LoadExecutionFromPR(ctx context.Context, tprov TagReader, prr PRResolver) (Execution, *PRDetails, error) {
 
 	pr, err := prr.CurrentPR(ctx)
@@ -111,12 +104,20 @@ func LoadExecutionFromPR(ctx context.Context, tprov TagReader, prr PRResolver) (
 		return nil, nil, err
 	}
 
+	baseNoRoot := slices.DeleteFunc(baseCommitTags, func(t Tag) bool {
+		return slices.Contains(rootCommitTags, t)
+	})
+
+	headNoBase := slices.DeleteFunc(headBranchTags, func(t Tag) bool {
+		return slices.Contains(baseBranchTags, t)
+	})
+
 	ex := &ActivePRProjectState{
 		CurrentPR:             pr,
 		CurrentHeadCommitTags: headTags,
+		CurrentBaseBranchTags: baseNoRoot,
+		CurrentHeadBranchTags: headNoBase,
 		CurrentBaseCommitTags: baseCommitTags,
-		CurrentBaseBranchTags: baseBranchTags,
-		CurrentHeadBranchTags: headBranchTags,
 		CurrentRootBranchTags: rootBranchTags,
 		CurrentRootCommitTags: rootCommitTags,
 	}

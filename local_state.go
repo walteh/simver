@@ -3,7 +3,7 @@ package simver
 import (
 	"context"
 
-	"github.com/go-faster/errors"
+	"gitlab.com/tozd/go/errors"
 )
 
 var _ Execution = &LocalProjectState{}
@@ -19,22 +19,22 @@ func NewLocalProjectState(ctx context.Context, gp GitProvider, tr TagReader) (Ex
 
 	commit, err := gp.GetHeadRef(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting parent commit")
+		return nil, errors.Errorf("getting parent commit: %w", err)
 	}
 
 	branch, err := gp.Branch(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting branch")
+		return nil, errors.Errorf("getting branch: %w", err)
 	}
 
 	tags, err := tr.TagsFromBranch(ctx, branch)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting tags from branch")
+		return nil, errors.Errorf("getting tags from branch: %w", err)
 	}
 
 	dirty, err := gp.Dirty(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting dirty")
+		return nil, errors.Errorf("getting dirty: %w", err)
 	}
 
 	return &LocalProjectState{

@@ -2,25 +2,31 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"flag"
 	"os"
 
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
+	"github.com/walteh/simver/cli"
 	"github.com/walteh/simver/gitexec"
-	szl "github.com/walteh/snake/zerolog"
-	"github.com/walteh/terrors"
 )
+
+var path = flag.String("path", ".", "path to the repository")
+var readOnly = flag.Bool("read-only", true, "read-only mode")
+
+func init() {
+	flag.Parse()
+}
 
 func main() {
 
 	ctx := context.Background()
 
-	ctx = szl.NewVerboseConsoleLogger().WithContext(ctx)
+	ctx = cli.ApplyDefaultLoggerContext(ctx, &cli.DefaultLoggerOpts{})
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
-	_, tagreader, tagwriter, _, prr, err := gitexec.BuildGitHubActionsProviders()
+	_, tagreader, tagwriter, _, prr, err := gitexec.BuildGitHubActionsProviders(*path, *readOnly)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error creating provider")
 		os.Exit(1)
@@ -29,7 +35,7 @@ func main() {
 	ee, _, err := simver.LoadExecutionFromPR(ctx, tagreader, prr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution")
-		fmt.Println(terrors.FormatErrorCaller(err))
+		// fmt.Println(terrors.FormatErrorCaller(err))
 		os.Exit(1)
 	}
 
@@ -40,7 +46,7 @@ func main() {
 	err = tagwriter.CreateTags(ctx, tags...)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
-		fmt.Println(terrors.FormatErrorCaller(err))
+		// fmt.Println(terrors.FormatErrorCaller(err))
 
 		os.Exit(1)
 	}

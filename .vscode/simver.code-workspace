@@ -43,5 +43,8 @@
 		"[dockerfile]": {
 			"editor.defaultFormatter": "foxundermoon.shell-format"
 		},
+		"yaml.schemas": {
+			"https://json.schemastore.org/github-action.json": "file:///Users/dub6ix/Developer/walteh/github/simver/actions/simver.yaml"
+		},
 	}
 }
