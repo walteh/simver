@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"os"
 
 	"github.com/rs/zerolog"
@@ -9,6 +10,13 @@ import (
 	"github.com/walteh/simver/cli"
 	"github.com/walteh/simver/gitexec"
 )
+
+var path = flag.String("path", ".", "path to the repository")
+var readOnly = flag.Bool("read-only", true, "read-only mode")
+
+func init() {
+	flag.Parse()
+}
 
 func main() {
 
@@ -18,7 +26,7 @@ func main() {
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
-	_, tagreader, tagwriter, _, prr, err := gitexec.BuildGitHubActionsProviders()
+	_, tagreader, tagwriter, _, prr, err := gitexec.BuildGitHubActionsProviders(*path, *readOnly)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error creating provider")
 		os.Exit(1)

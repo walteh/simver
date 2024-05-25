@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"os"
 	"time"
 
@@ -10,6 +11,13 @@ import (
 	"github.com/walteh/simver/cli"
 	"github.com/walteh/simver/gitexec"
 )
+
+var path = flag.String("path", ".", "path to the repository")
+var readOnly = flag.Bool("read-only", true, "read-only mode")
+
+func init() {
+	flag.Parse()
+}
 
 func check(ctx context.Context, gp simver.GitProvider, tr simver.TagReader, tw simver.TagWriter, head string) (*simver.Tag, bool, error) {
 	if head == "" {
@@ -76,7 +84,7 @@ func main() {
 
 	defer can()
 
-	git, tr, tw, _, _, err := gitexec.BuildGitHubActionsProviders()
+	git, tr, tw, _, _, err := gitexec.BuildGitHubActionsProviders(*path, *readOnly)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msg("error creating provider")
 		os.Exit(1)

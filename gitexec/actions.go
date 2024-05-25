@@ -10,11 +10,9 @@ import (
 	"gitlab.com/tozd/go/errors"
 )
 
-func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagReader, simver.TagWriter, simver.PRProvider, simver.PRResolver, error) {
+func BuildGitHubActionsProviders(path string, readOnly bool) (simver.GitProvider, simver.TagReader, simver.TagWriter, simver.PRProvider, simver.PRResolver, error) {
 
 	token := os.Getenv("GITHUB_TOKEN")
-	repoPath := os.Getenv("GITHUB_WORKSPACE")
-	readOnly := os.Getenv("SIMVER_READ_ONLY")
 
 	org := os.Getenv("GITHUB_REPOSITORY_OWNER")
 	repo := os.Getenv("GITHUB_REPOSITORY")
@@ -22,20 +20,20 @@ func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagReader, simver
 	repo = strings.TrimPrefix(repo, org+"/")
 
 	c := &GitProviderOpts{
-		RepoPath:      repoPath,
+		RepoPath:      path,
 		Token:         token,
 		User:          "github-actions[bot]",
 		Email:         "41898282+github-actions[bot]@users.noreply.github.com",
 		TokenEnvName:  "GITHUB_TOKEN",
 		GitExecutable: "git",
-		ReadOnly:      readOnly == "true" || readOnly == "1",
+		ReadOnly:      readOnly,
 		Org:           org,
 		Repo:          repo,
 	}
 
 	pr := &GHProvierOpts{
 		GitHubToken:  token,
-		RepoPath:     repoPath,
+		RepoPath:     path,
 		GHExecutable: "gh",
 		Org:          org,
 		Repo:         repo,

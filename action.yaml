@@ -50,4 +50,4 @@ runs:
           working-directory: __source__
           env:
               GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-          run: "ls -la && simver_gha --read-only=false"
+          run: "ls -la && simver_gha --read-only=false --path=."
