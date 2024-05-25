@@ -1,44 +1,15 @@
-{
-    name: wait-on-simver,
-    concurrency:
-        { group: "wait-on-simver-${{github.ref}}", cancel-in-progress: false },
-    permissions: { id-token: write, contents: read },
-    on: { workflow_dispatch: null, workflow_call: {}, push: { branches: "*" } },
-    defaults: { run: { shell: bash } },
-    jobs:
-        {
-            simver:
-                {
-                    runs-on: ubuntu-latest,
-
-                    steps:
-                        [
-                            {
-                                name: checkout code,
-                                uses: "actions/checkout@v4",
-                                with: { fetch-depth: 0 },
-                            },
-                            {
-                                name: setup golang,
-                                uses: "actions/setup-go@v4",
-                                with: { go-version: 1.21.4 },
-                            },
-                            {
-                                name: install simver,
-                                run: "go install github.com/walteh/simver/cmd/wait_on_gha@wait-on-simver-test-c",
-                            },
-                            {
-                                name: run simver,
-                                id: simver,
-                                env:
-                                    {
-                                        SIMVER_WAIT: "2m",
-                                        SIMVER_INTERVAL: "10s",
-                                        GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-                                    },
-                                run: wait_on_simver_gha,
-                            },
-                        ],
-                },
-        },
-}
+name: simver
+permissions: { id-token: write, contents: write, pull-requests: read }
+on:
+    workflow_dispatch:
+    push:
+        branches: [main]
+    pull_request:
+        types: [opened, synchronize, reopened, closed]
+jobs:
+    simver:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: walteh/simver/cmd/gha-wait-on-simver@ccd3abc6c36046d739362838f5ae7d96f8100658
+              with:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
