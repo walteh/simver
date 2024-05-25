@@ -14,7 +14,8 @@ runs:
         - name: get current action ref
           id: get-action-ref
           shell: bash
-          run: "echo '${{ github.action_path }}' | sed -n 's/.*walteh\\/simver\\///p' | xargs -I {} echo 'SIMVER_GITHUB_ACTION_REF={}' >> $GITHUB_ENV"
+          # we  need to trim *walteh/simver prefix the /cmd/gha-simver suffix
+          run: "echo '${{ github.action_path }}' | sed -n 's/.*walteh\\/simver\\///p' | sed -n 's/\\/cmd\\/gha-simver//p' | xargs -I {} echo 'SIMVER_GITHUB_ACTION_REF={}' >> $GITHUB_ENV"
 
         - name: checkout simver code
           uses: actions/checkout@v4

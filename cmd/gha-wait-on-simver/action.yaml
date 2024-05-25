@@ -14,7 +14,7 @@ runs:
         - name: get current action ref
           id: get-action-ref
           shell: bash
-          run: "echo '${{ github.action_path }}' | sed -n 's/.*walteh\\/simver\\///p' | xargs -I {} echo 'SIMVER_GITHUB_ACTION_REF={}' >> $GITHUB_ENV"
+          run: "echo '${{ github.action_path }}' | sed -n 's/.*walteh\\/simver\\///p' | sed -n 's/\\/cmd\\/gha-wait-on-simver//p' | xargs -I {} echo 'SIMVER_GITHUB_ACTION_REF={}' >> $GITHUB_ENV"
 
         - name: checkout simver code
           uses: actions/checkout@v4
