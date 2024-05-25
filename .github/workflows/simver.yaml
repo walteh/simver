@@ -18,8 +18,9 @@
                             # print current git context
                             {
                                 name: print git context,
-                                run: "jq . -r <<< '${{ toJson(github) }}' | tee /dev/stderr",
+                                run: "jq . -r '${{github.event_path}}",
                             },
+
                             {
                                 name: checkout code,
                                 uses: "actions/checkout@v4",
