@@ -29,5 +29,5 @@ runs:
     - name: install simver
       shell: bash
       env:
-        GITHUB_TOKEN: ${{ input.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
       run: "go run ./__simver__/cmd/simver_gha --read-only=false"
