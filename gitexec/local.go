@@ -4,9 +4,9 @@ import (
 	"context"
 	"strings"
 
-	"github.com/go-faster/errors"
 	"github.com/spf13/afero"
 	"github.com/walteh/simver"
+	"gitlab.com/tozd/go/errors"
 )
 
 func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagReader, simver.TagWriter, simver.PRResolver, error) {

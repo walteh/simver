@@ -3,7 +3,7 @@ package simver
 import (
 	"context"
 
-	"github.com/go-faster/errors"
+	"gitlab.com/tozd/go/errors"
 )
 
 var _ Execution = &LocalProjectState{}

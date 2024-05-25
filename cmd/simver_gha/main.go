@@ -2,14 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
 	"github.com/walteh/simver/gitexec"
 	szl "github.com/walteh/snake/zerolog"
-	"github.com/walteh/terrors"
 )
 
 func main() {
@@ -29,7 +27,7 @@ func main() {
 	ee, _, err := simver.LoadExecutionFromPR(ctx, tagreader, prr)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error loading execution")
-		fmt.Println(terrors.FormatErrorCaller(err))
+		// fmt.Println(terrors.FormatErrorCaller(err))
 		os.Exit(1)
 	}
 
@@ -40,7 +38,7 @@ func main() {
 	err = tagwriter.CreateTags(ctx, tags...)
 	if err != nil {
 		zerolog.Ctx(ctx).Error().Err(err).Msgf("error creating tag: %v", err)
-		fmt.Println(terrors.FormatErrorCaller(err))
+		// fmt.Println(terrors.FormatErrorCaller(err))
 
 		os.Exit(1)
 	}

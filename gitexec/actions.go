@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-faster/errors"
 	"github.com/walteh/simver"
+	"gitlab.com/tozd/go/errors"
 )
 
 func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagReader, simver.TagWriter, simver.PRProvider, simver.PRResolver, error) {

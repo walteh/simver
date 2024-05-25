@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-faster/errors"
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
+	"gitlab.com/tozd/go/errors"
 )
 
 var (
