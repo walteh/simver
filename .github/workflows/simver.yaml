@@ -18,7 +18,7 @@
                             # print current git context
                             {
                                 name: print git context,
-                                run: "jq . -r '${{github.event_path}}",
+                                run: "jq . -r ${{github.event_path}}",
                             },
 
                             {
