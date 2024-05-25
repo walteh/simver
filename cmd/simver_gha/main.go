@@ -6,15 +6,15 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
+	"github.com/walteh/simver/cli"
 	"github.com/walteh/simver/gitexec"
-	szl "github.com/walteh/snake/zerolog"
 )
 
 func main() {
 
 	ctx := context.Background()
 
-	ctx = szl.NewVerboseConsoleLogger().WithContext(ctx)
+	ctx = cli.ApplyDefaultLoggerContext(ctx, &cli.DefaultLoggerOpts{})
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 

@@ -7,8 +7,8 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/walteh/simver"
+	"github.com/walteh/simver/cli"
 	"github.com/walteh/simver/gitexec"
-	szl "github.com/walteh/snake/zerolog"
 )
 
 func check(ctx context.Context, gp simver.GitProvider, tr simver.TagReader, tw simver.TagWriter, head string) (*simver.Tag, bool, error) {
@@ -68,7 +68,7 @@ func main() {
 	// get commit to wait on
 	ctx := context.Background()
 
-	ctx = szl.NewVerboseConsoleLogger().WithContext(ctx)
+	ctx = cli.ApplyDefaultLoggerContext(ctx, &cli.DefaultLoggerOpts{})
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
