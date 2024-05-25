@@ -19,7 +19,7 @@ runs:
         - name: checkout simver code
           uses: actions/checkout@v4
           with:
-              fetch-depth: 0
+              fetch-depth: 1
               repository: walteh/simver
               ref: ${{ env.SIMVER_GITHUB_ACTION_REF }}
               path: __simver__
@@ -50,4 +50,4 @@ runs:
           working-directory: __source__
           env:
               GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-          run: "simver_gha --read-only=false"
+          run: "ls -la && simver_gha --read-only=false"

@@ -43,17 +43,17 @@ func BuildGitHubActionsProviders() (simver.GitProvider, simver.TagReader, simver
 
 	git, err := NewGitProvider(c)
 	if err != nil {
-		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating git provider")
+		return nil, nil, nil, nil, nil, errors.Errorf("creating git provider: %w", err)
 	}
 
 	gh, err := NewGHProvider(pr)
 	if err != nil {
-		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating gh provider")
+		return nil, nil, nil, nil, nil, errors.Errorf("creating gh provider: %w", err)
 	}
 
 	gha, err := WrapGitProviderInGithubActions(git)
 	if err != nil {
-		return nil, nil, nil, nil, nil, errors.Wrap(err, "error creating gh provider")
+		return nil, nil, nil, nil, nil, errors.Errorf("creating gh provider: %w", err)
 	}
 
 	return gha, git, git, gh, &GitHubActionsPullRequestResolver{gh, git}, nil
@@ -76,12 +76,12 @@ func (p *GitHubActionsPullRequestResolver) CurrentPR(ctx context.Context) (*simv
 
 		n, err := strconv.Atoi(num)
 		if err != nil {
-			return nil, errors.Wrap(err, "error converting PR number to int")
+			return nil, errors.Errorf("converting PR number to int: %w", err)
 		}
 
 		pr, exists, err := p.gh.PRDetailsByPRNumber(ctx, n)
 		if err != nil {
-			return nil, errors.Wrap(err, "error getting PR details by PR number")
+			return nil, errors.Errorf("getting PR details by PR number: %w", err)
 		}
 
 		if !exists {
@@ -101,7 +101,7 @@ func (p *GitHubActionsPullRequestResolver) CurrentPR(ctx context.Context) (*simv
 
 	pr, exists, err := p.gh.PRDetailsByCommit(ctx, sha)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting PR details by commit")
+		return nil, errors.Errorf("getting PR details by commit: %w", err)
 	}
 
 	if exists {
@@ -117,7 +117,7 @@ func (p *GitHubActionsPullRequestResolver) CurrentPR(ctx context.Context) (*simv
 	// get the parent commit
 	parent, err := p.git.CommitFromRef(ctx, "HEAD^")
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting parent commit")
+		return nil, errors.Errorf("getting parent commit: %w", err)
 	}
 
 	return simver.NewPushSimulatedPRDetails(parent, sha, branch), nil

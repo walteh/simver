@@ -13,12 +13,12 @@ func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagReader, si
 
 	repoData, err := fls.Open(".git/config")
 	if err != nil {
-		return nil, nil, nil, nil, errors.Wrap(err, "error opening /.git/config")
+		return nil, nil, nil, nil, errors.Errorf("opening /.git/config: %w", err)
 	}
 
 	repoConfig, err := afero.ReadAll(repoData)
 	if err != nil {
-		return nil, nil, nil, nil, errors.Wrap(err, "error reading /.git/config")
+		return nil, nil, nil, nil, errors.Errorf("reading /.git/config: %w", err)
 	}
 
 	// split the config file into lines
@@ -65,7 +65,7 @@ func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagReader, si
 	if bp, ok := fls.(*afero.BasePathFs); ok {
 		path, err = bp.RealPath("/")
 		if err != nil {
-			return nil, nil, nil, nil, errors.Wrap(err, "error getting real path")
+			return nil, nil, nil, nil, errors.Errorf("getting real path: %w", err)
 		}
 	} else {
 		path = "."
@@ -85,7 +85,7 @@ func BuildLocalProviders(fls afero.Fs) (simver.GitProvider, simver.TagReader, si
 
 	git, err := NewGitProvider(c)
 	if err != nil {
-		return nil, nil, nil, nil, errors.Wrap(err, "error creating git provider")
+		return nil, nil, nil, nil, errors.Errorf("creating git provider: %w", err)
 	}
 
 	return git, git, git, &LocalPullRequestResolver{}, nil
@@ -99,7 +99,7 @@ func (p *LocalPullRequestResolver) CurrentPR(ctx context.Context) (*simver.PRDet
 
 	cmt, err := p.git.GetHeadRef(ctx)
 	if err != nil {
-		return nil, errors.Wrap(err, "error getting head ref")
+		return nil, errors.Errorf("getting head ref: %w", err)
 	}
 
 	return &simver.PRDetails{
