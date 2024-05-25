@@ -3,9 +3,7 @@ permissions: { id-token: write, contents: write, pull-requests: read }
 on:
     workflow_dispatch:
     push:
-        branches: [main]
-    pull_request:
-        types: [opened, synchronize, reopened, closed]
+        branches: ["*"]
 jobs:
     simver:
         runs-on: ubuntu-latest

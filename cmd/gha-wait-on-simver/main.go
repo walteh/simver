@@ -47,9 +47,16 @@ func check(ctx context.Context, gp simver.GitProvider, tr simver.TagReader, tw s
 
 func main() {
 
+	// get commit to wait on
+	ctx := context.Background()
+
+	ctx = cli.ApplyDefaultLoggerContext(ctx, &cli.DefaultLoggerOpts{
+		CommandName: "gha-wait-on-simver",
+	})
+
 	eventName := os.Getenv("GITHUB_EVENT_NAME")
 	if eventName != "push" {
-		zerolog.Ctx(context.Background()).Error().Str("event_name", eventName).Msg("not a push event - this action is only useful for push events")
+		zerolog.Ctx(ctx).Error().Str("event_name", eventName).Msg("not a push event - this action is only useful for push events")
 		os.Exit(1)
 	}
 
@@ -66,10 +73,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// get commit to wait on
-	ctx := context.Background()
-
-	ctx = cli.ApplyDefaultLoggerContext(ctx, &cli.DefaultLoggerOpts{})
 
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 
