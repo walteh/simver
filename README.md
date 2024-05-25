@@ -7,41 +7,47 @@ Forget about the headache of manual versioning. SimVer is here to automate and s
 ## 🎯 Target Audience
 
 SimVer is the go-to solution for developers and teams who:
-- Are exhausted by manual versioning complexities.
-- Desire a consistent, traceable version history.
-- Need seamless integration with CI/CD tools like GitHub Actions.
+
+-   Are exhausted by manual versioning complexities.
+-   Desire a consistent, traceable version history.
+-   Need seamless integration with CI/CD tools like GitHub Actions.
 
 ## ✨ Features
 
-- **Automated Version Tags:** Automatically generates semantic version tags for all commits and pull requests.
-- **Clear Versioning Rules:** Simplifies decision-making with straightforward rules for main and side branches.
-- **Linear History Dependence:** Ensures all version increments are predictable and orderly.
+-   **Automated Version Tags:** Automatically generates semantic version tags for all commits and pull requests.
+-   **Clear Versioning Rules:** Simplifies decision-making with straightforward rules for main and side branches.
+-   **Linear History Dependence:** Ensures all version increments are predictable and orderly.
 
 ## 📘 How It Works
 
 ### Versioning Logic Simplified
-- **Direct Pushes to Main:** Trigger minor version updates automatically.
-- **Pull Requests:**
-  - To Main: Trigger minor updates.
-  - To Side Branches: Apply patch updates.
-  - Multiple Concurrent PRs: Ensure unique, sequential versioning without conflicts.
-- **Merging:** Versions merge seamlessly, with the target branch adopting the version from the merged branch or PR.
+
+-   **Direct Pushes to Main:** Trigger minor version updates automatically.
+-   **Pull Requests:**
+    -   To Main: Trigger minor updates.
+    -   To Side Branches: Apply patch updates.
+    -   Multiple Concurrent PRs: Ensure unique, sequential versioning without conflicts.
+-   **Merging:** Versions merge seamlessly, with the target branch adopting the version from the merged branch or PR.
 
 ### Tagging Made Easy
-- **Main Branch:** Receives clean, full release versions.
-- **Side Branches and PRs:** Get detailed pre-release tags to avoid confusion and maintain clarity.
+
+-   **Main Branch:** Receives clean, full release versions.
+-   **Side Branches and PRs:** Get detailed pre-release tags to avoid confusion and maintain clarity.
 
 ### Real-world Examples
-- Direct push to `main` changes `v1.0.0` to `v1.1.0`.
-- A PR to `main` updates from `v1.0.0` to `v1.1.0`.
-- A PR to a side branch updates from `v1.1.0` to `v1.1.1`.
-- Handling multiple PRs ensures sequential updates without overlap.
+
+-   Direct push to `main` changes `v1.0.0` to `v1.1.0`.
+-   A PR to `main` updates from `v1.0.0` to `v1.1.0`.
+-   A PR to a side branch updates from `v1.1.0` to `v1.1.1`.
+-   Handling multiple PRs ensures sequential updates without overlap.
 
 ## 🚀 Getting Started
 
 ### Usage
+
 Easily integrate SimVer into your GitHub Actions with this setup:
-___yaml
+
+```yaml
 name: simver
 permissions: { id-token: write, contents: write, pull-requests: read }
 on:
@@ -52,16 +58,22 @@ on:
         types: [opened, synchronize, reopened, closed]
 jobs:
     simver:
-        uses: walteh/simver/actions/simver@v1
-        secrets: inherit
-___
+        runs-on: ubuntu-latest
+        steps:
+            - uses: walteh/simver/cmd/gha-simver@v1
+              with:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
 
 ## ⚠️ Current Limitations & 🛠 Future Fixes
-- **Junk Tags Cleanup:** Upcoming feature to clear temporary tags automatically.
-- **Force Push Handling:** We're improving how version recalculations handle force pushes to maintain accurate histories.
+
+-   **Junk Tags Cleanup:** Upcoming feature to clear temporary tags automatically.
+-   **Force Push Handling:** We're improving how version recalculations handle force pushes to maintain accurate histories.
 
 ## 🤝 Contributing
+
 Contributions are welcome! Fork, modify, and submit a pull request.
 
 ## 📜 License
+
 Distributed under the MIT License. See `LICENSE` for more information.
