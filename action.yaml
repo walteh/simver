@@ -8,12 +8,19 @@ runs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+    - name: print git context
+      shell: bash
+      run: "jq . -r <<< '${{ toJson(github) }}' | tee /dev/stderr"
+    - name: get current action  ref
+      id: get-action-ref
+      shell: bash
+      run: "echo \"SIMVER_GITHUB_ACTION_REF=${{ github.action_ref }}\" >> $GITHUB_ENV"
     - name: checkout simver code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
         repository: walteh/simver
-        ref: ${{ github.action_ref }}
+        ref: ${{ env.SIMVER_GITHUB_ACTION_REF }}
         path: "__simver__"
     - name: get current go version from go.mod
       id: go-version
