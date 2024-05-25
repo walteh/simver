@@ -44,11 +44,11 @@ runs:
         - name: install simver
           shell: bash
           working-directory: __simver__
-          run: "go install ./cmd/simver-gha"
+          run: "go install ./cmd/gha-simver"
 
         - name: run simver
           shell: bash
           working-directory: __source__
           env:
               GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}
-          run: "simver-gha --read-only=false --path=."
+          run: "gha-simver --read-only=false --path=."
