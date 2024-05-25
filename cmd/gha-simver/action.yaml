@@ -1,5 +1,5 @@
 name: simver
-description: "simple semantic versioning"
+description: "calculates new tag and pushes it to the repository"
 inputs: { GITHUB_TOKEN: { description: "GitHub token", required: true } }
 runs:
     using: "composite"

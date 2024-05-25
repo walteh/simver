@@ -15,6 +15,9 @@ import (
 var path = flag.String("path", ".", "path to the repository")
 var readOnly = flag.Bool("read-only", true, "read-only mode")
 
+var wait = flag.String("wait", "2m", "time to wait for tag")
+var interval = flag.String("interval", "5s", "interval to check for tag")
+
 func init() {
 	flag.Parse()
 }
@@ -50,17 +53,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	waitInput := os.Getenv("SIMVER_WAIT")
-	if waitInput == "" {
-		waitInput = "2m"
-	}
-
-	intervalInput := os.Getenv("SIMVER_INTERVAL")
-	if intervalInput == "" {
-		intervalInput = "5s"
-	}
-
-	wait, err := time.ParseDuration(waitInput)
+	wait, err := time.ParseDuration(*wait)
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +62,7 @@ func main() {
 
 	end := start.Add(wait)
 
-	interval, err := time.ParseDuration(intervalInput)
+	interval, err := time.ParseDuration(*interval)
 	if err != nil {
 		panic(err)
 	}

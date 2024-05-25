@@ -1,66 +1,15 @@
-{
-    name: simver,
-    concurrency: { group: simver, cancel-in-progress: false },
-    permissions: { id-token: write, contents: write, pull-requests: read },
-    on: {
-            workflow_dispatch: null,
-            workflow_call: {},
-            # push: { branches: [main] },
-            # pull_request: { types: [opened, synchronize, reopened, closed] },
-        },
-    defaults: { run: { shell: bash } },
-    jobs: { simver: { runs-on: ubuntu-latest, steps: [
-                            {
-                                name: checkout code,
-                                uses: "actions/checkout@v4",
-                                with: { fetch-depth: 0 },
-                            },
-                            # print current git context
-                            {
-                                name: print git context,
-                                run: "jq . -r <<< '${{ toJson(github) }}' | tee /dev/stderr",
-                            },
-                            {
-                                name: print the current workflow file name,
-                                run: "echo $GITHUB_WORKFLOW_FILE",
-                            },
-
-                            {
-                                name: checkout code,
-                                uses: "actions/checkout@v4",
-                                with:
-                                    {
-                                        fetch-depth: 0,
-                                        repository: "walteh/simver",
-                                        ref: "${{ env.GITHUB_WORKFLOW_REF }}",
-                                        path: "__simver__",
-                                    },
-                            },
-                            {
-                                name: get current go version from go.mod,
-                                id: go-version,
-                                run: 'cat go.mod | grep ''go '' | awk ''{print $2}'' | xargs -I {} echo "GO_VERSION={}" >> $GITHUB_ENV',
-                            },
-                            {
-                                name: setup golang,
-                                uses: "actions/setup-go@v4",
-                                with: { go-version: "${{ env.GO_VERSION }}" },
-                            },
-                            {
-                                name: download dependencies,
-                                run: "cd __simver__ && go mod download",
-                            },
-                            {
-                                name: install simver,
-                                run: "cd __simver__ && go install ./cmd/simver_gha",
-                            },
-                            {
-                                name: run simver,
-                                env:
-                                    {
-                                        GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
-                                    },
-                                run: "simver_gha --read-only=false",
-                            },
-                        ] } },
-}
+name: simver
+permissions: { id-token: write, contents: write, pull-requests: read }
+on:
+    workflow_dispatch:
+    push:
+        branches: [main]
+    pull_request:
+        types: [opened, synchronize, reopened, closed]
+jobs:
+    simver:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: walteh/simver/cmd/gha-simver
+              with:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
