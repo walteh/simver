@@ -27,7 +27,7 @@
                                 with:
                                     {
                                         fetch-depth: 0,
-                                        repository: "walteh/simver",
+                                        repository: "github.com/walteh/simver",
                                         ref: "{{ env.GITHUB_WORKFLOW_SHA }}",
                                         path: "__simver__",
                                     },
