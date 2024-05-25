@@ -18,7 +18,11 @@
                             # print current git context
                             {
                                 name: print git context,
-                                run: "jq . -r ${{github.event_path}}",
+                                run: "jq . -r <<< '${{ toJson(github) }}' | tee /dev/stderr",
+                            },
+                            {
+                                name: print the current workflow file name,
+                                run: "echo $GITHUB_WORKFLOW_FILE",
                             },
 
                             {
