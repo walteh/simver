@@ -47,16 +47,20 @@
                                 with: { go-version: "${{ env.GO_VERSION }}" },
                             },
                             {
-                                name: install dependencies,
+                                name: download dependencies,
                                 run: "cd __simver__ && go mod download",
                             },
                             {
                                 name: install simver,
+                                run: "cd __simver__ && go install ./cmd/simver_gha",
+                            },
+                            {
+                                name: run simver,
                                 env:
                                     {
                                         GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
                                     },
-                                run: "go run ./__simver__/cmd/simver_gha --read-only=false",
+                                run: "simver_gha --read-only=false",
                             },
                         ] } },
 }
