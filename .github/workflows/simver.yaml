@@ -9,17 +9,16 @@
             # pull_request: { types: [opened, synchronize, reopened, closed] },
         },
     defaults: { run: { shell: bash } },
-    jobs:
-        {
-            simver:
-                {
-                    runs-on: ubuntu-latest,
-                    steps:
-                        [
+    jobs: { simver: { runs-on: ubuntu-latest, steps: [
                             {
                                 name: checkout code,
                                 uses: "actions/checkout@v4",
                                 with: { fetch-depth: 0 },
+                            },
+                            # print current git context
+                            {
+                                name: print git context,
+                                run: "jq . -r <<< '${{ toJson(github) }}' | tee /dev/stderr",
                             },
                             {
                                 name: checkout code,
@@ -28,7 +27,7 @@
                                     {
                                         fetch-depth: 0,
                                         repository: "walteh/simver",
-                                        ref: "${{ env.GITHUB_WORKFLOW_SHA }}",
+                                        ref: "${{ env.GITHUB_WORKFLOW_REF }}",
                                         path: "__simver__",
                                     },
                             },
@@ -54,7 +53,5 @@
                                     },
                                 run: "go run ./__simver__/cmd/simver_gha --read-only=false",
                             },
-                        ],
-                },
-        },
+                        ] } },
 }
