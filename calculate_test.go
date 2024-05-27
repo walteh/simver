@@ -306,6 +306,26 @@ func TestNewCalculationAndCalculateNewTags(t *testing.T) {
 				MergeTags: []string{"v0.18.1"},
 			},
 		},
+
+		{
+			name: "new bugfix branch",
+			calculation: &simver.Calculation{
+				ForcePatch:        false,
+				IsMerged:          true,
+				MostRecentLiveTag: "",
+				MyMostRecentBuild: 0.000000,
+				MyMostRecentTag:   "",
+				NextValidTag:      "v0.3.0",
+				PR:                1.000000,
+				Skip:              false,
+			},
+			output: &simver.CalculationOutput{
+				BaseTags:  []string{},
+				HeadTags:  []string{},
+				RootTags:  []string{},
+				MergeTags: []string{"v0.18.1"},
+			},
+		},
 	}
 
 	ctx := context.Background()

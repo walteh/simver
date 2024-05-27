@@ -28,6 +28,13 @@ var _ zerolog.LogArrayMarshaler = (*Tags)(nil)
 
 type Tags []Tag
 
+func (t Tags) Copy() Tags {
+	tags := make(Tags, len(t))
+	copy(tags, t)
+
+	return tags
+}
+
 func shortRef(ref string) string {
 	if len(ref) <= 11 {
 		return ref

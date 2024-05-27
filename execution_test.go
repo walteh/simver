@@ -535,6 +535,132 @@ func TestNewTags(t *testing.T) {
 			isTargetingRoot: true,
 			expectedTags:    simver.Tags{},
 		},
+
+		// debug 23:06:39.070385 gitexec:tag.go:110 > got tags from branch branch=main dur="2.544345" tags=[unmarshaled json of byte array] []interface {}{
+		// 	map[string]interface {}{
+		// 	  "Name": "v0.2.0-pr1+base",
+		// 	  "Ref":  "70380fda303a70c9f2cabd94b8dc49c73dbb1507",
+		// 	},
+		// 	map[string]interface {}{
+		// 	  "Name": "v0.2.0-reserved",
+		// 	  "Ref":  "70380fda303a70c9f2cabd94b8dc49c73dbb1507",
+		// 	},
+		//   } tags_len="2"
+		//   debug 23:06:39.070559 gitexec:tag.go:114 > got tags from branch branch=main dur="2.712849" tags=[unmarshaled json of byte array] []interface {}{
+		// 	map[string]interface {}{
+		// 	  "Name": "v0.2.0-pr1+base",
+		// 	  "Ref":  "70380fda303a70c9f2cabd94b8dc49c73dbb1507",
+		// 	},
+		// 	map[string]interface {}{
+		// 	  "Name": "v0.2.0-reserved",
+		// 	  "Ref":  "70380fda303a70c9f2cabd94b8dc49c73dbb1507",
+		// 	},
+		//   } tags_len="2"
+		//   debug 23:06:39.070818 gitexec:tag.go:24 > getting tags from commit commit=e83d0d624a3b32f524cd1c27db10b9089fba5479
+		//   debug 23:06:39.070848 gitexec:git.go:114 > building git command args=[unmarshaled json of byte array] []interface {}{
+		// 	"tag",
+		// 	"--points-at",
+		// 	"e83d0d624a3b32f524cd1c27db10b9089fba5479",
+		//   } commit=e83d0d624a3b32f524cd1c27db10b9089fba5479 executable=git
+		//   debug 23:06:39.072875 gitexec:tag.go:46 > got tags from commit commit=e83d0d624a3b32f524cd1c27db10b9089fba5479 tags=[unmarshaled json of byte array] nil tags_len="0"
+		//   debug 23:06:39.072913 gitexec:tag.go:57 > getting tags from branch branch=main
+		//   debug 23:06:39.072942 gitexec:git.go:114 > building git command args=[unmarshaled json of byte array] []interface {}{
+		// 	"tag",
+		// 	"--merged",
+		// 	"origin/main",
+		// 	"--format='{\"sha\":\"%(objectname)\",\"type\": \"%(objecttype)\", \"ref\": \"%(refname)\"}'",
+		//   } branch=main executable=git
+		//   debug 23:06:39.075177 gitexec:tag.go:110 > got tags from branch branch=main dur="2.259715" tags=[unmarshaled json of byte array] []interface {}{
+		// 	map[string]interface {}{
+		// 	  "Name": "v0.2.0-pr1+base",
+		// 	  "Ref":  "70380fda303a70c9f2cabd94b8dc49c73dbb1507",
+		// 	},
+		// 	map[string]interface {}{
+		// 	  "Name": "v0.2.0-reserved",
+		// 	  "Ref":  "70380fda303a70c9f2cabd94b8dc49c73dbb1507",
+		// 	},
+		//   } tags_len="2"
+		//   debug 23:06:39.075361 gitexec:tag.go:114 > got tags from branch branch=main dur="2.436455" tags=[unmarshaled json of byte array] []interface {}{
+		// 	map[string]interface {}{
+		// 	  "Name": "v0.2.0-pr1+base",
+		// 	  "Ref":  "70380fda303a70c9f2cabd94b8dc49c73dbb1507",
+		// 	},
+		// 	map[string]interface {}{
+		// 	  "Name": "v0.2.0-reserved",
+		// 	  "Ref":  "70380fda303a70c9f2cabd94b8dc49c73dbb1507",
+		// 	},
+		//   } tags_len="2"
+		//   debug 23:06:39.075518 gitexec:tag.go:24 > getting tags from commit commit=e83d0d624a3b32f524cd1c27db10b9089fba5479
+		//   debug 23:06:39.075542 gitexec:git.go:114 > building git command args=[unmarshaled json of byte array] []interface {}{
+		// 	"tag",
+		// 	"--points-at",
+		// 	"e83d0d624a3b32f524cd1c27db10b9089fba5479",
+		//   } commit=e83d0d624a3b32f524cd1c27db10b9089fba5479 executable=git
+		//   debug 23:06:39.078151 gitexec:tag.go:46 > got tags from commit commit=e83d0d624a3b32f524cd1c27db10b9089fba5479 tags=[unmarshaled json of byte array] nil tags_len="0"
+		//   debug 23:06:39.078261 github.com/walteh/simver:pr_state.go:133 > loaded tags CurrentBaseBranchTags=[unmarshaled json of byte array] []interface {}{
+		// 	"7038...1507 => v0.2.0-pr1+base",
+		// 	"7038...1507 => v0.2.0-reserved",
+		//   } CurrentBaseCommitTags=[unmarshaled json of byte array] []interface {}{
+		// 	"7038...1507 => v0.2.0-pr1+base",
+		// 	"7038...1507 => v0.2.0-reserved",
+		//   } CurrentHeadBranchTags=[unmarshaled json of byte array] []interface {}{} CurrentHeadCommitTags=[unmarshaled json of byte array] []interface {}{} CurrentRootBranchTags=[unmarshaled json of byte array] []interface {}{
+		// 	"7038...1507 => v0.2.0-pr1+base",
+		// 	"7038...1507 => v0.2.0-reserved",
+		//   } CurrentRootCommitTags=[unmarshaled json of byte array] []interface {}{} IsTargetingRoot=[unmarshaled json of byte array] true
+		//   debug 23:06:39.078556 github.com/walteh/simver:execution.go:258 > calculated next valid tag maj=v0. majmin=v0.2 max=v0.2.0 min=2 minornum="3" patch=0 patchnum="0"
+		//   debug 23:06:39.078665 github.com/walteh/simver:calculate.go:134 > CalculateNewTagsRaw calculation=[unmarshaled json of byte array] map[string]interface {}{
+		// 	"ForcePatch":        false,
+		// 	"IsMerged":          true,
+		// 	"MostRecentLiveTag": "",
+		// 	"MyMostRecentBuild": 0.000000,
+		// 	"MyMostRecentTag":   "",
+		// 	"NextValidTag":      "v0.3.0",
+		// 	"PR":                1.000000,
+		// 	"Skip":              false,
+		//   } forcePatch=[unmarshaled json of byte array] false isMerge=[unmarshaled json of byte array] true mmrt=v0.3.0 mrlt=v0.1.0 nvt=v0.3.0 output=[unmarshaled json of byte array] map[string]interface {}{
+		// 	"BaseTags":  []interface {}{},
+		// 	"HeadTags":  []interface {}{},
+		// 	"MergeTags": []interface {}{
+		// 	  "v0.3.0",
+		// 	},
+		// 	"RootTags": []interface {}{},
+		//   } pr=1
+
+		{
+			name: "when merging a branch that already is tagged correctly, on head, do nothing",
+			baseBranchTags: simver.Tags{
+				// simver.Tag{Name: "v0.2.0-pr1+1"},
+				// simver.Tag{Name: "v0.2.0"},
+				simver.Tag{Name: "v0.2.0-pr1+base"},
+				simver.Tag{Name: "v0.2.0-reserved"},
+				// simver.Tag{Name: "v0.3.0"},
+			},
+			headBranchTags: simver.Tags{
+				// simver.Tag{Name: "v0.2.0-pr1+1"},
+				// simver.Tag{Name: "v0.2.0"},
+				// simver.Tag{Name: "v0.3.0-pr1+base"},
+				// simver.Tag{Name: "v0.3.0-reserved"},
+				simver.Tag{Name: "v0.2.0-pr1+base"},
+				simver.Tag{Name: "v0.2.0-reserved"},
+				// simver.Tag{Name: "v0.3.0"},
+			},
+			headCommitTags: simver.Tags{
+				// simver.Tag{Name: "v0.3.0-reserved"},
+				// simver.Tag{Name: "v0.2.0-pr1+base"},
+				// simver.Tag{Name: "v0.2.0-reserved"},
+				// simver.Tag{Name: "v0.3.0"},
+			},
+			rootBranchTags: simver.Tags{
+				simver.Tag{Name: "v0.2.0-pr1+base"},
+				simver.Tag{Name: "v0.2.0-reserved"},
+			},
+			pr:              1,
+			isMerge:         true,
+			isTargetingRoot: true,
+			expectedTags: simver.Tags{
+				simver.Tag{Name: "v0.2.0", Ref: merge_ref},
+			},
+		},
 	}
 
 	ctx := context.Background()
