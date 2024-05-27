@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"runtime"
 	"runtime/debug"
 	"strings"
@@ -43,44 +44,53 @@ func DefaultLogger(opts *DefaultLoggerOpts) *zerolog.Logger {
 
 	consoleOutput := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.StampMicro, NoColor: false}
 
-	consoleOutput.FormatMessage = func(i interface{}) string {
-		if i == nil {
-			return "nil"
-		}
-
-		return color.New(color.FgHiWhite).Sprintf("%s", i.(string))
-	}
-
 	pretty := pp.New()
 
 	pretty.SetColorScheme(pp.ColorScheme{})
+
 	prettyerr := pp.New()
 	prettyerr.SetExportedOnly(false)
 
-	consoleOutput.FormatFieldName = func(i interface{}) string {
-		return color.New(color.Faint).Sprintf("%s", i) + color.New(color.FgHiGreen).Sprint("=")
-	}
+	consoleOutput.FormatFieldValue = func(i any) string {
 
-	consoleOutput.FormatFieldValue = func(i interface{}) string {
-
-		switch i := i.(type) {
+		switch t := i.(type) {
 		case error:
-			return prettyerr.Sprint(i)
+			return t.Error()
 		case []byte:
-			var g interface{}
-			err := json.Unmarshal(i, &g)
+			var g any
+			err := json.Unmarshal(t, &g)
 			if err != nil {
-				return pretty.Sprint(string(i))
+				return pretty.Sprint(string(t))
 			} else {
-				return fmt.Sprintf("[unmarshaled json of byte array] %s", pretty.Sprint(g))
+				return pretty.Sprint(g)
 			}
-		case string:
-			return color.New(color.Bold).Sprint(i)
 		}
 
-		return pretty.Sprint(i)
-	}
+		switch reflect.TypeOf(i).Kind() {
+		case reflect.Struct:
+			return pretty.Sprint(i)
+		case reflect.Map:
+			return pretty.Sprint(i)
+		case reflect.Slice:
+			return pretty.Sprint(i)
+		case reflect.Array:
+			return pretty.Sprint(i)
+		case reflect.Ptr:
+			return pretty.Sprint(i)
+		case reflect.Interface:
+			return pretty.Sprint(i)
+		case reflect.Func:
+			return pretty.Sprint(i)
+		case reflect.Chan:
+			return pretty.Sprint(i)
+		case reflect.UnsafePointer:
+			return pretty.Sprint(i)
+		case reflect.Uintptr:
+			return pretty.Sprint(i)
+		}
 
+		return fmt.Sprintf("%v", i)
+	}
 	consoleOutput.FormatLevel = func(i interface{}) string {
 		switch i := i.(string); i {
 		case zerolog.LevelDebugValue:
