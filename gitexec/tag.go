@@ -107,7 +107,7 @@ func (p *gitProvider) TagsFromBranch(ctx context.Context, branch string) (simver
 		tags = append(tags, simver.Tag{Name: name, Ref: dat.Sha})
 	}
 
-	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tags)).Array("tags", tags).Dur("dur", time.Since(start)).Msg("got tags from branch")
+	zerolog.Ctx(ctx).Debug().Int("tags_len", len(tags)).Dur("dur", time.Since(start)).Msg("got tags from branch")
 
 	// tags = tags.ExtractCommitRefs()
 

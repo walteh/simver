@@ -90,12 +90,15 @@ func LoadExecutionFromPR(ctx context.Context, tprov TagReader, prr PRResolver) (
 	if pr.Merged {
 		headCommit = pr.MergeCommit
 		headBranchTags = baseBranchTags
+
+		zerolog.Ctx(ctx).Debug().Str("commit", headCommit).Str("branch", pr.HeadBranch).Msg("[MERGED] setting head branch tags")
 	} else {
 		headCommit = pr.HeadCommit
 		branchTags, err := tprov.TagsFromBranch(ctx, pr.HeadBranch)
 		if err != nil {
 			return nil, nil, err
 		}
+		zerolog.Ctx(ctx).Debug().Array("tags", branchTags).Str("commit", headCommit).Str("branch", pr.HeadBranch).Msg("[NOT MERGED} setting head branch tags")
 		headBranchTags = branchTags
 	}
 
@@ -104,13 +107,27 @@ func LoadExecutionFromPR(ctx context.Context, tprov TagReader, prr PRResolver) (
 		return nil, nil, err
 	}
 
+	beforeNoRoot := len(baseCommitTags)
+
 	baseNoRoot := slices.DeleteFunc(baseCommitTags, func(t Tag) bool {
 		return slices.Contains(rootCommitTags, t)
 	})
 
+	zerolog.Ctx(ctx).Debug().
+		Int("before", beforeNoRoot).
+		Int("after", len(baseNoRoot)).
+		Msg("pruning base commit tags")
+
+	before := len(baseBranchTags)
+
 	headNoBase := slices.DeleteFunc(headBranchTags, func(t Tag) bool {
 		return slices.Contains(baseBranchTags, t)
 	})
+
+	zerolog.Ctx(ctx).Debug().
+		Int("before", before).
+		Int("after", len(headBranchTags)).
+		Msg("pruning head branch tags")
 
 	ex := &ActivePRProjectState{
 		CurrentPR:             pr,
