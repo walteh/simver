@@ -110,7 +110,9 @@ func LoadExecutionFromPR(ctx context.Context, tprov TagReader, prr PRResolver) (
 	beforeNoRoot := len(baseCommitTags)
 
 	baseNoRoot := slices.DeleteFunc(baseCommitTags, func(t Tag) bool {
-		return slices.Contains(rootCommitTags, t)
+		return slices.ContainsFunc(rootCommitTags, func(r Tag) bool {
+			return r.Name == t.Name
+		})
 	})
 
 	zerolog.Ctx(ctx).Debug().
@@ -118,15 +120,17 @@ func LoadExecutionFromPR(ctx context.Context, tprov TagReader, prr PRResolver) (
 		Int("after", len(baseNoRoot)).
 		Msg("pruning base commit tags")
 
-	before := len(baseBranchTags)
+	before := len(headBranchTags)
 
 	headNoBase := slices.DeleteFunc(headBranchTags, func(t Tag) bool {
-		return slices.Contains(baseBranchTags, t)
+		return slices.ContainsFunc(baseBranchTags, func(b Tag) bool {
+			return b.Name == t.Name
+		})
 	})
 
 	zerolog.Ctx(ctx).Debug().
 		Int("before", before).
-		Int("after", len(headBranchTags)).
+		Int("after", len(headNoBase)).
 		Msg("pruning head branch tags")
 
 	ex := &ActivePRProjectState{
