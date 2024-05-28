@@ -60,15 +60,15 @@ jobs:
     simver:
         runs-on: ubuntu-latest
         steps:
-            - uses: walteh/simver/cmd/gha-simver@v1
+            - uses: walteh/simver/cmd/gha-simver@v0
               with:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 ## ⚠️ Current Limitations & 🛠 Future Fixes
 
--   **Junk Tags Cleanup:** Upcoming feature to clear temporary tags automatically.
--   **Force Push Handling:** We're improving how version recalculations handle force pushes to maintain accurate histories.
+-   **Junk Tags Cleanup:** Upcoming feature to clear temporary tags automatically. (#13)
+-   **Force Push Handling:** We're improving how version recalculations handle force pushes to maintain accurate histories. (#6)
 
 ## 🤝 Contributing
 
