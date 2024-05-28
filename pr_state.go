@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"slices"
 
 	"github.com/rs/zerolog"
 )
@@ -107,33 +106,37 @@ func LoadExecutionFromPR(ctx context.Context, tprov TagReader, prr PRResolver) (
 		return nil, nil, err
 	}
 
-	beforeNoRoot := len(baseCommitTags)
+	// beforeNoRoot := len(baseCommitTags)
 
-	baseNoRoot := slices.DeleteFunc(baseCommitTags, func(t Tag) bool {
-		return slices.Contains(rootCommitTags, t)
-	})
+	// baseNoRoot := slices.DeleteFunc(baseCommitTags, func(t Tag) bool {
+	// 	return slices.ContainsFunc(rootCommitTags, func(r Tag) bool {
+	// 		return r.Name == t.Name
+	// 	})
+	// })
 
-	zerolog.Ctx(ctx).Debug().
-		Int("before", beforeNoRoot).
-		Int("after", len(baseNoRoot)).
-		Msg("pruning base commit tags")
+	// zerolog.Ctx(ctx).Debug().
+	// 	Int("before", beforeNoRoot).
+	// 	Int("after", len(baseNoRoot)).
+	// 	Msg("pruning base commit tags")
 
-	before := len(baseBranchTags)
+	// before := len(headBranchTags)
 
-	headNoBase := slices.DeleteFunc(headBranchTags, func(t Tag) bool {
-		return slices.Contains(baseBranchTags, t)
-	})
+	// headNoBase := slices.DeleteFunc(headBranchTags, func(t Tag) bool {
+	// 	return slices.ContainsFunc(baseBranchTags, func(b Tag) bool {
+	// 		return b.Name == t.Name
+	// 	})
+	// })
 
-	zerolog.Ctx(ctx).Debug().
-		Int("before", before).
-		Int("after", len(headBranchTags)).
-		Msg("pruning head branch tags")
+	// zerolog.Ctx(ctx).Debug().
+	// 	Int("before", before).
+	// 	Int("after", len(headNoBase)).
+	// 	Msg("pruning head branch tags")
 
 	ex := &ActivePRProjectState{
 		CurrentPR:             pr,
 		CurrentHeadCommitTags: headTags,
-		CurrentBaseBranchTags: baseNoRoot,
-		CurrentHeadBranchTags: headNoBase,
+		CurrentBaseBranchTags: baseBranchTags,
+		CurrentHeadBranchTags: headBranchTags,
 		CurrentBaseCommitTags: baseCommitTags,
 		CurrentRootBranchTags: rootBranchTags,
 		CurrentRootCommitTags: rootCommitTags,
